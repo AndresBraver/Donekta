@@ -50,7 +50,20 @@ export default function AuthModal({ onClose }: Props) {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
-        router.push('/donor')
+
+        // Check if user is an approved community
+        const { data: comm } = await supabase
+          .from('communities')
+          .select('id, status')
+          .eq('contact_email', email)
+          .eq('status', 'approved')
+          .single()
+
+        if (comm) {
+          router.push(`/community-edit?id=${comm.id}`)
+        } else {
+          router.push('/donor')
+        }
         onClose()
       }
     } catch (e: any) {
