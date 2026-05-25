@@ -80,11 +80,11 @@ export default function CommunityEdit() {
         const ext = imageFile.name.split('.').pop()
         const path = `${id}.${ext}`
         const { error: uploadError } = await supabase.storage
-          .from('community-images')
+          .from('donekta')
           .upload(path, imageFile, { upsert: true })
         if (uploadError) throw uploadError
         const { data: urlData } = supabase.storage
-          .from('community-images')
+          .from('donekta')
           .getPublicUrl(path)
         imageUrl = urlData.publicUrl
       }
