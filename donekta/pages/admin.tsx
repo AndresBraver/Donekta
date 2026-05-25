@@ -31,12 +31,25 @@ export default function Admin() {
     if (!editKey.trim()) { setKeyError('Escribe una clave'); return }
     if (editKey.trim().length < 4) { setKeyError('Mínimo 4 caracteres'); return }
 
-    await supabase.from('communities').update({ status: 'approved', edit_key: editKey.trim() }).eq('id', approvingId!)
+    const { error: updateError } = await supabase
+      .from('communities')
+      .update({ status: 'approved', edit_key: editKey.trim() })
+      .eq('id', approvingId!)
+
+    if (updateError) {
+      setKeyError('Error al guardar en base de datos. Intenta de nuevo.')
+      return
+    }
+
     try {
       await fetch('/api/send-approval', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, communityId: approvingId })
+        body: JSON.stringify({
+          email,
+          communityId: approvingId,
+          editKey: editKey.trim(),   // ← se pasa al API para incluirla en el correo
+        })
       })
     } catch (_) {}
     setApprovingId(null)
