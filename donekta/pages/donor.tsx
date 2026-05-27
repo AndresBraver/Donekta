@@ -152,7 +152,6 @@ export default function Donor() {
                   ? <p className="text-gray-600 text-sm leading-relaxed mb-6">{selected.mission}</p>
                   : null
                 }
-
                 {selected.goal_amount > 0 && (
                   <div className="bg-gray-50 rounded-xl p-5 mb-6">
                     <div className="flex justify-between text-sm mb-2">
@@ -168,7 +167,6 @@ export default function Donor() {
                     </div>
                   </div>
                 )}
-
                 <p className="text-sm font-semibold text-gray-700 mb-3">Elige un monto</p>
                 <div className="grid grid-cols-4 gap-2 mb-3">
                   {[100, 250, 500, 1000].map(a => (
@@ -209,10 +207,13 @@ export default function Donor() {
               </div>
               <span className="font-bold text-gray-900">Donekta</span>
             </div>
-            <button onClick={() => { supabase.auth.signOut(); window.location.href = '/' }}
-              className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
-              Cerrar sesión
-            </button>
+            <div className="flex items-center gap-4">
+              <a href="/profile" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">Mi perfil</a>
+              <button onClick={() => { supabase.auth.signOut(); window.location.href = '/' }}
+                className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
+                Cerrar sesión
+              </button>
+            </div>
           </div>
         </div>
         <div className="max-w-5xl mx-auto px-6 py-10">
