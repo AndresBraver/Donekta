@@ -28,28 +28,21 @@ export default function CommunityEdit() {
 
   useEffect(() => {
     const load = async () => {
-      // Get current user
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/'); return }
-
       const email = session.user.email
-
-      // Find their community
       const { data, error } = await supabase
         .from('communities')
         .select('*')
         .eq('contact_email', email)
         .eq('status', 'approved')
         .single()
-
       if (error || !data) {
-        // Not an approved community - check if pending
         const { data: pending } = await supabase
           .from('communities')
           .select('status')
           .eq('contact_email', email)
           .single()
-
         if (pending?.status === 'pending') {
           router.push('/community-pending')
         } else {
@@ -57,7 +50,6 @@ export default function CommunityEdit() {
         }
         return
       }
-
       setCommunity(data)
       setForm({
         name: data.name || '',
@@ -92,7 +84,6 @@ export default function CommunityEdit() {
     setError('')
     try {
       let imageUrl = community.image_url || null
-
       if (imageFile) {
         const ext = imageFile.name.split('.').pop()
         const path = `${community.id}.${ext}`
@@ -105,7 +96,6 @@ export default function CommunityEdit() {
           .getPublicUrl(path)
         imageUrl = urlData.publicUrl
       }
-
       const { error: updateError } = await supabase
         .from('communities')
         .update({
@@ -166,15 +156,18 @@ export default function CommunityEdit() {
               </div>
               <span className="text-xl font-bold text-gray-900">Donekta</span>
             </div>
-            <button onClick={() => { supabase.auth.signOut(); router.push('/') }}
-              className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
-              Cerrar sesión
-            </button>
+            <div className="flex gap-4">
+              <a href="/donor" className="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition-colors">
+                Ver plataforma
+              </a>
+              <button onClick={() => { supabase.auth.signOut(); router.push('/') }}
+                className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
+                Cerrar sesión
+              </button>
+            </div>
           </div>
-
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
             <h2 className="text-xl font-black text-gray-900 mb-6">Editar perfil de comunidad</h2>
-
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">Imagen de la comunidad</label>
               {imagePreview ? (
@@ -193,12 +186,10 @@ export default function CommunityEdit() {
                 </label>
               )}
             </div>
-
             <div className="space-y-4">
               <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Nombre *</label>
                 <input type="text" value={form.name} onChange={e => set('name', e.target.value)} placeholder="Nombre de la comunidad"
                   className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400" /></div>
-
               <div><label className="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
                 <div className="grid grid-cols-2 gap-2">
                   {CATEGORIES.map(c => (
@@ -209,15 +200,12 @@ export default function CommunityEdit() {
                   ))}
                 </div>
               </div>
-
               <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Misión</label>
                 <textarea value={form.mission} onChange={e => set('mission', e.target.value)} rows={3} placeholder="¿Qué hace tu comunidad?"
                   className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400 resize-none" /></div>
-
               <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Descripción</label>
                 <textarea value={form.description} onChange={e => set('description', e.target.value)} rows={3} placeholder="Describe tu comunidad..."
                   className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400 resize-none" /></div>
-
               <div className="grid grid-cols-2 gap-3">
                 <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Ciudad</label>
                   <input type="text" value={form.city} onChange={e => set('city', e.target.value)} placeholder="Ciudad"
@@ -226,15 +214,12 @@ export default function CommunityEdit() {
                   <input type="text" value={form.state} onChange={e => set('state', e.target.value)} placeholder="Estado"
                     className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400" /></div>
               </div>
-
               <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Beneficiarios</label>
                 <input type="text" value={form.beneficiaries} onChange={e => set('beneficiaries', e.target.value)} placeholder="Ej. 500 familias"
                   className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400" /></div>
-
               <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Meta de recaudación (MXN)</label>
                 <input type="number" value={form.goal_amount} onChange={e => set('goal_amount', e.target.value)} placeholder="Ej. 50000"
                   className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400" /></div>
-
               <div className="grid grid-cols-2 gap-3">
                 <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Facebook</label>
                   <input type="text" value={form.facebook} onChange={e => set('facebook', e.target.value)} placeholder="@tupagina"
@@ -244,9 +229,7 @@ export default function CommunityEdit() {
                     className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400" /></div>
               </div>
             </div>
-
             {error && <div className="mt-4 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">{error}</div>}
-
             <button onClick={handleSave} disabled={saving || !form.name}
               className="w-full mt-8 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-colors text-sm">
               {saving ? 'Guardando...' : 'Guardar cambios'}
