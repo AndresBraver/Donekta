@@ -27,9 +27,7 @@ export default function AuthModal({ onClose }: Props) {
           options: { data: { full_name: name, user_type: userType } }
         })
         if (error) throw error
-
         if (userType === 'community') {
-          // Save community request
           await supabase.from('communities').insert([{
             name: name || email.split('@')[0],
             contact_email: email,
@@ -38,7 +36,6 @@ export default function AuthModal({ onClose }: Props) {
             goal_amount: 0,
             raised_amount: 0,
           }])
-          // Send email notification
           await fetch('/api/send-community-request', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -53,7 +50,21 @@ export default function AuthModal({ onClose }: Props) {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
-        router.push('/donor')
+        if (email === 'andresbraver@gmail.com') {
+          router.push('/admin')
+        } else {
+          const { data: comm } = await supabase
+            .from('communities')
+            .select('id')
+            .eq('contact_email', email)
+            .eq('status', 'approved')
+            .single()
+          if (comm) {
+            router.push('/community-edit')
+          } else {
+            router.push('/donor')
+          }
+        }
         onClose()
       }
     } catch (e: any) {
@@ -77,7 +88,6 @@ export default function AuthModal({ onClose }: Props) {
             <X className="w-5 h-5" />
           </button>
         </div>
-
         <div className="p-6">
           <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
             <button onClick={() => setMode('login')}
@@ -89,7 +99,6 @@ export default function AuthModal({ onClose }: Props) {
               Registrarse
             </button>
           </div>
-
           <div className="space-y-4">
             {mode === 'register' && (
               <>
@@ -102,13 +111,13 @@ export default function AuthModal({ onClose }: Props) {
                   <label className="block text-sm font-medium text-gray-700 mb-2">¿Cómo deseas unirte?</label>
                   <div className="grid grid-cols-2 gap-3">
                     <button onClick={() => setUserType('donor')}
-                      className={`relative rounded-xl border-2 p-4 text-left transition-all ${userType === 'donor' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                      className={`rounded-xl border-2 p-4 text-left transition-all ${userType === 'donor' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'}`}>
                       <Heart className={`w-5 h-5 mb-2 ${userType === 'donor' ? 'text-emerald-500' : 'text-gray-400'}`} />
                       <p className="font-semibold text-gray-900 text-sm">Donador</p>
                       <p className="text-xs text-gray-500 mt-0.5">Quiero apoyar comunidades</p>
                     </button>
                     <button onClick={() => setUserType('community')}
-                      className={`relative rounded-xl border-2 p-4 text-left transition-all ${userType === 'community' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                      className={`rounded-xl border-2 p-4 text-left transition-all ${userType === 'community' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'}`}>
                       <Users className={`w-5 h-5 mb-2 ${userType === 'community' ? 'text-emerald-500' : 'text-gray-400'}`} />
                       <p className="font-semibold text-gray-900 text-sm">Comunidad</p>
                       <p className="text-xs text-gray-500 mt-0.5">Represento una comunidad</p>
@@ -116,29 +125,25 @@ export default function AuthModal({ onClose }: Props) {
                   </div>
                   {userType === 'community' && (
                     <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
-                      📧 Tu solicitud será revisada. Recibirás respuesta en 1–3 días hábiles.
+                      📧 Tu solicitud será revisada. Recibirás respuesta en 1-3 días hábiles.
                     </div>
                   )}
                 </div>
               </>
             )}
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Correo electrónico</label>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@email.com"
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400 transition-colors" />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Contraseña</label>
               <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Mínimo 6 caracteres"
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400 transition-colors" />
             </div>
-
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">{error}</div>
             )}
-
             <button onClick={handleSubmit} disabled={loading || !email || !password}
               className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors text-sm">
               {loading ? 'Cargando...' : mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
