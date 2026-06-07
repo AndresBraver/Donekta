@@ -9,12 +9,13 @@ export default function Donor() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Community | null>(null)
-  const [amount, setAmount] = useState(500)
+  const [amount, setAmount] = useState(118)
   const [customAmount, setCustomAmount] = useState('')
   const [showCheckout, setShowCheckout] = useState(false)
   const [donated, setDonated] = useState(false)
   const [donorName, setDonorName] = useState('')
   const [donorEmail, setDonorEmail] = useState('')
+  const [dedicateTo, setDedicateTo] = useState('')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -40,8 +41,6 @@ export default function Donor() {
     !search || (c.name + c.category + c.city).toLowerCase().includes(search.toLowerCase())
   )
 
-  const pct = (c: Community) => c.goal_amount > 0 ? Math.min(100, Math.round((c.raised_amount / c.goal_amount) * 100)) : 0
-
   const catColor: Record<string, { bg: string; text: string; banner: string }> = {
     'Alimentación':    { bg: '#d1fae5', text: '#065f46', banner: '#d1fae5' },
     'Educación':       { bg: '#dbeafe', text: '#1e40af', banner: '#dbeafe' },
@@ -61,14 +60,14 @@ export default function Donor() {
     }).eq('id', selected.id)
     await supabase.from('donations').insert([{
       community_id: selected.id,
-      donor_name: donorName,
+      donor_name: dedicateTo ? `${donorName} (en nombre de ${dedicateTo})` : donorName,
       donor_email: donorEmail,
       amount
     }])
     await fetch('/api/send-donation-confirmation', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ donorEmail, donorName, amount, communityName: selected.name })
+      body: JSON.stringify({ donorEmail, donorName, amount, communityName: selected.name, dedicateTo })
     })
     setShowCheckout(false)
     setDonated(true)
@@ -84,9 +83,10 @@ export default function Donor() {
           <h1 className="text-2xl font-black text-gray-900 mb-3">¡Gracias por donar!</h1>
           <p className="text-gray-500 text-sm leading-relaxed mb-6">
             Tu donación de <strong className="text-emerald-600">${amount.toLocaleString()} MXN</strong> a{' '}
-            <strong>{selected.name}</strong> fue procesada. Recibirás un comprobante en tu correo.
+            <strong>{selected.name}</strong> fue procesada.
+            {dedicateTo && <span> Dedicada a <strong>{dedicateTo}</strong>.</span>}
           </p>
-          <button onClick={() => { setDonated(false); setSelected(null); setAmount(500); setCustomAmount(''); fetchCommunities() }}
+          <button onClick={() => { setDonated(false); setSelected(null); setAmount(118); setCustomAmount(''); setDedicateTo(''); fetchCommunities() }}
             className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 px-8 rounded-xl transition-colors text-sm">
             Donar a otra comunidad
           </button>
@@ -152,36 +152,35 @@ export default function Donor() {
                   ? <p className="text-gray-600 text-sm leading-relaxed mb-6">{selected.mission}</p>
                   : null
                 }
-                {selected.goal_amount > 0 && (
-                  <div className="bg-gray-50 rounded-xl p-5 mb-6">
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="font-medium text-gray-700">Progreso</span>
-                      <span className="font-bold text-emerald-600">{pct(selected)}%</span>
-                    </div>
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-3">
-                      <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${pct(selected)}%` }} />
-                    </div>
-                    <div className="flex justify-between text-xs text-gray-400">
-                      <span>${(selected.raised_amount || 0).toLocaleString()} MXN recaudados</span>
-                      <span>Meta: ${selected.goal_amount.toLocaleString()} MXN</span>
-                    </div>
-                  </div>
-                )}
+
                 <p className="text-sm font-semibold text-gray-700 mb-3">Elige un monto</p>
                 <div className="grid grid-cols-4 gap-2 mb-3">
-                  {[100, 250, 500, 1000].map(a => (
+                  {[118, 180, 1800, 18000].map(a => (
                     <button key={a} onClick={() => { setAmount(a); setCustomAmount('') }}
                       className={`py-2.5 text-sm rounded-xl border-2 font-semibold transition-all ${amount === a && !customAmount ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
-                      ${a}
+                      ${a.toLocaleString()}
                     </button>
                   ))}
                 </div>
-                <div className="relative mb-6">
+                <div className="relative mb-4">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
                   <input type="number" placeholder="Otro monto" value={customAmount}
                     onChange={e => { setCustomAmount(e.target.value); setAmount(Number(e.target.value)) }}
                     className="w-full border border-gray-200 rounded-xl pl-7 pr-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400 transition-colors" />
                 </div>
+
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Dedicar donación a alguien <span className="text-gray-400 font-normal">(opcional)</span>
+                  </label>
+                  <input type="text" placeholder="Nombre de la persona"
+                    value={dedicateTo} onChange={e => setDedicateTo(e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400 transition-colors" />
+                  {dedicateTo && (
+                    <p className="text-xs text-emerald-600 mt-1.5">✓ Donación dedicada a <strong>{dedicateTo}</strong></p>
+                  )}
+                </div>
+
                 <button onClick={() => setShowCheckout(true)} disabled={amount < 1}
                   className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl transition-colors text-base flex items-center justify-center gap-2">
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
@@ -252,22 +251,11 @@ export default function Donor() {
                     <div className="p-5">
                       <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: col.bg, color: col.text }}>{c.category}</span>
                       <h3 className="font-bold text-gray-900 mt-2 mb-1 group-hover:text-emerald-700 transition-colors">{c.name}</h3>
-                      <div className="flex items-center gap-3 text-xs text-gray-400 mb-3">
+                      <div className="flex items-center gap-3 text-xs text-gray-400 mb-2">
                         {c.city && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{c.city}</span>}
                         {c.beneficiaries && <span className="flex items-center gap-1"><Users className="w-3 h-3" />{c.beneficiaries}</span>}
                       </div>
-                      {c.description && <p className="text-xs text-gray-500 mb-3 line-clamp-2 leading-relaxed">{c.description}</p>}
-                      {c.goal_amount > 0 && (
-                        <>
-                          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${pct(c)}%` }} />
-                          </div>
-                          <div className="flex justify-between mt-2">
-                            <span className="text-xs text-gray-400">${(c.raised_amount || 0).toLocaleString()} MXN</span>
-                            <span className="text-xs font-bold text-emerald-600">{pct(c)}%</span>
-                          </div>
-                        </>
-                      )}
+                      {c.description && <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{c.description}</p>}
                     </div>
                   </button>
                 )
