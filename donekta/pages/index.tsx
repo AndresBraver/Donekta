@@ -152,15 +152,15 @@ export default function Home() {
         <div style={{ maxWidth: 700, margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{ fontSize: 36, fontWeight: 900, color: '#fff', marginBottom: 16 }}>Transparencia total</h2>
           <p style={{ fontSize: 16, color: '#9CA3AF', marginBottom: 40, lineHeight: 1.7 }}>
-            Donekta cobra una comisión del <strong style={{ color: '#55B584' }}>5%</strong> por donación. El resto llega directo a la comunidad.
+            Donekta cobra una comisión del <strong style={{ color: '#55B584' }}>2% por donación. El resto llega directo a la comunidad.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 40 }}>
             <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: 24 }}>
-              <p style={{ fontSize: 32, fontWeight: 900, color: '#55B584', marginBottom: 4 }}>95%</p>
+              <p style={{ fontSize: 32, fontWeight: 900, color: '#55B584', marginBottom: 4 }}>98%</p>
               <p style={{ fontSize: 14, color: '#9CA3AF' }}>Va a la comunidad</p>
             </div>
             <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: 24 }}>
-              <p style={{ fontSize: 32, fontWeight: 900, color: '#fff', marginBottom: 4 }}>5%</p>
+              <p style={{ fontSize: 32, fontWeight: 900, color: '#fff', marginBottom: 4 }}>2%</p>
               <p style={{ fontSize: 14, color: '#9CA3AF' }}>Mantiene la plataforma</p>
             </div>
           </div>

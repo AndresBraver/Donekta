@@ -5,38 +5,28 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOi
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-export type UserType = 'donor' | 'community'
-
 export interface Community {
   id: string
   name: string
-  category: string
+  rfc?: string
+  address?: string
   city: string
-  state: string
-  mission: string
-  description: string
-  beneficiaries: string
-  contact_name: string
+  state?: string
+  category: string
+  mission?: string
+  description?: string
+  beneficiaries?: string
+  contact_name?: string
   contact_email: string
-  contact_phone: string
-  website: string
-  facebook: string
-  instagram: string
-  rfc: string
-  address: string
-  status: 'pending' | 'approved' | 'rejected'
+  contact_phone?: string
+  website?: string
+  facebook?: string
+  instagram?: string
+  stripe_account_id?: string
+  image_url: string
   goal_amount: number
   raised_amount: number
-  stripe_account_id: string
-  image_url: string
-  created_at: string
-}
-
-export interface Donation {
-  id: string
-  community_id: string
-  donor_name: string
-  donor_email: string
-  amount: number
+  status: string
+  edit_key?: string
   created_at: string
 }

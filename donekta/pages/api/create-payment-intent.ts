@@ -7,9 +7,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end()
-
   const { amount, communityName } = req.body
-
   try {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(Number(amount) * 100),
@@ -17,10 +15,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       automatic_payment_methods: { enabled: true },
       metadata: { communityName: communityName || '' },
     })
-
     return res.status(200).json({ clientSecret: paymentIntent.client_secret })
   } catch (error: any) {
-    console.error('Stripe error:', error)
     return res.status(500).json({ error: error.message })
   }
 }
