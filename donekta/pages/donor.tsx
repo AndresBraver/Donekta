@@ -89,6 +89,13 @@ export default function Donor() {
     setCommentSaved(true)
   }
 
+  const reset = () => {
+    setDonated(false); setSelected(null); setAmount(118); setCustomAmount('')
+    setDedicateTo(''); setComment(''); setPublicComment(false)
+    setCommentSaved(false); setLastDonationId(null)
+    fetchCommunities()
+  }
+
   if (donated && selected) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
@@ -129,12 +136,11 @@ export default function Donor() {
             </div>
           ) : (
             <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-6 text-sm text-emerald-700">
-              ✓ Comentario guardado — {publicComment ? 'aparecerá en la página principal' : 'guardado de forma privada'}
+              ✓ Comentario guardado {publicComment ? '— aparecerá en la página principal' : '— guardado de forma privada'}
             </div>
           )}
 
-          <button onClick={() => { setDonated(false); setSelected(null); setAmount(118); setCustomAmount(''); setDedicateTo(''); setComment(''); setPublicComment(false); setCommentSaved(false); setLastDonationId(null); fetchCommunities() }}
-            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-xl transition-colors text-sm">
+          <button onClick={reset} className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-xl transition-colors text-sm">
             Donar a otra comunidad
           </button>
         </div>
@@ -146,7 +152,7 @@ export default function Donor() {
     return (
       <div className="min-h-screen bg-gray-50 py-10 px-6">
         <div className="max-w-md mx-auto">
-          <button onClick={() => setShowCheckout(false)} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm font-medium mb-6 transition-colors">
+          <button onClick={() => setShowCheckout(false)} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm font-medium mb-6">
             <ArrowLeft className="w-4 h-4" /> Volver
           </button>
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
@@ -174,7 +180,7 @@ export default function Donor() {
         <Head><title>{selected.name} — Donekta</title></Head>
         <div className="min-h-screen bg-gray-50">
           <div className="bg-white border-b border-gray-100 px-6 py-4">
-            <button onClick={() => setSelected(null)} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors">
+            <button onClick={() => setSelected(null)} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm font-medium">
               <ArrowLeft className="w-4 h-4" /> Volver a comunidades
             </button>
           </div>
@@ -190,15 +196,12 @@ export default function Donor() {
                 </span>
                 <h1 className="text-2xl font-black text-gray-900 mb-2">{selected.name}</h1>
                 <div className="flex items-center gap-4 text-sm text-gray-400 mb-4">
-                  <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{selected.city}{selected.state ? `, ${selected.state}` : ''}</span>
+                  {selected.city && <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{selected.city}{selected.state ? `, ${selected.state}` : ''}</span>}
                   {selected.beneficiaries && <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{selected.beneficiaries}</span>}
                 </div>
-                {selected.description
-                  ? <p className="text-gray-600 text-sm leading-relaxed mb-6">{selected.description}</p>
-                  : selected.mission
-                  ? <p className="text-gray-600 text-sm leading-relaxed mb-6">{selected.mission}</p>
-                  : null
-                }
+                {(selected.description || selected.mission) && (
+                  <p className="text-gray-600 text-sm leading-relaxed mb-6">{selected.description || selected.mission}</p>
+                )}
 
                 <p className="text-sm font-semibold text-gray-700 mb-3">Elige un monto</p>
                 <div className="grid grid-cols-4 gap-2 mb-3">
@@ -213,7 +216,7 @@ export default function Donor() {
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
                   <input type="number" placeholder="Otro monto" value={customAmount}
                     onChange={e => { setCustomAmount(e.target.value); setAmount(Number(e.target.value)) }}
-                    className="w-full border border-gray-200 rounded-xl pl-7 pr-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400 transition-colors" />
+                    className="w-full border border-gray-200 rounded-xl pl-7 pr-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400" />
                 </div>
 
                 <div className="mb-6">
@@ -222,10 +225,8 @@ export default function Donor() {
                   </label>
                   <input type="text" placeholder="Nombre de la persona"
                     value={dedicateTo} onChange={e => setDedicateTo(e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400 transition-colors" />
-                  {dedicateTo && (
-                    <p className="text-xs text-emerald-600 mt-1.5">✓ Donación dedicada a <strong>{dedicateTo}</strong></p>
-                  )}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400" />
+                  {dedicateTo && <p className="text-xs text-emerald-600 mt-1.5">✓ Dedicada a <strong>{dedicateTo}</strong></p>}
                 </div>
 
                 <button onClick={() => setShowCheckout(true)} disabled={amount < 1}
@@ -247,18 +248,13 @@ export default function Donor() {
       <div className="min-h-screen bg-gray-50">
         <div className="bg-white border-b border-gray-100 px-6 py-4">
           <div className="max-w-5xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center">
-                  <Heart className="w-4 h-4 text-white fill-white" />
-                </div>
-                <span className="font-bold text-gray-900">Donekta</span>
-              </a>
-            </div>
+            <button onClick={() => window.location.href = '/'} className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer" style={{ background: 'none', border: 'none' }}>
+              <img src="/logo-donekta-oscuro.svg" alt="Donekta" style={{ height: 32 }} />
+            </button>
             <div className="flex items-center gap-4">
-              <a href="/profile" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">Mi perfil</a>
+              <a href="/profile" className="text-sm text-gray-500 hover:text-gray-700">Mi perfil</a>
               <button onClick={() => { supabase.auth.signOut(); window.location.href = '/' }}
-                className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
+                className="text-sm text-gray-400 hover:text-gray-600">
                 Cerrar sesión
               </button>
             </div>
@@ -271,20 +267,16 @@ export default function Donor() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input type="text" placeholder="Buscar por nombre, categoría o ciudad..."
               value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-emerald-400 bg-white transition-colors" />
+              className="w-full border border-gray-200 rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-emerald-400 bg-white" />
           </div>
           {loading ? (
-            <div className="text-center py-20 text-gray-400">
+            <div className="text-center py-20">
               <div className="w-8 h-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-              Cargando comunidades...
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-20">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-gray-300" />
-              </div>
-              <h3 className="font-bold text-gray-700 mb-2">{search ? 'No encontramos comunidades' : 'Aún no hay comunidades'}</h3>
-              <p className="text-sm text-gray-400">{search ? 'Intenta con otro término.' : 'Las comunidades aparecerán aquí una vez aprobadas.'}</p>
+              <Users className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+              <p className="text-gray-400">{search ? 'No encontramos comunidades' : 'Aún no hay comunidades aprobadas'}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -299,12 +291,12 @@ export default function Donor() {
                     }
                     <div className="p-5">
                       <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: col.bg, color: col.text }}>{c.category}</span>
-                      <h3 className="font-bold text-gray-900 mt-2 mb-1 group-hover:text-emerald-700 transition-colors">{c.name}</h3>
+                      <h3 className="font-bold text-gray-900 mt-2 mb-1 group-hover:text-emerald-700">{c.name}</h3>
                       <div className="flex items-center gap-3 text-xs text-gray-400 mb-2">
                         {c.city && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{c.city}</span>}
                         {c.beneficiaries && <span className="flex items-center gap-1"><Users className="w-3 h-3" />{c.beneficiaries}</span>}
                       </div>
-                      {c.description && <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{c.description}</p>}
+                      {c.description && <p className="text-xs text-gray-500 line-clamp-2">{c.description}</p>}
                     </div>
                   </button>
                 )

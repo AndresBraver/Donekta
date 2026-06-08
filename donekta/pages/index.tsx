@@ -39,7 +39,7 @@ export default function Home() {
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <img src="/logo-donekta-oscuro.svg" alt="Donekta" style={{ height: 36 }} />
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-            <button onClick={() => setShowAuth(true)} style={{ fontSize: 14, color: '#6F737D', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 16px', borderRadius: 8 }}>
+            <button onClick={() => setShowAuth(true)} style={{ fontSize: 14, color: '#6F737D', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 16px' }}>
               Soy comunidad
             </button>
             <button onClick={() => setShowAuth(true)} style={{ fontSize: 14, fontWeight: 600, color: '#fff', background: '#55B584', border: 'none', cursor: 'pointer', padding: '10px 22px', borderRadius: 100 }}>
@@ -72,7 +72,7 @@ export default function Home() {
               </button>
             </div>
           </div>
-          <div style={{ borderRadius: 20, overflow: 'hidden', height: 400 }}>
+          <div style={{ borderRadius: 20, overflow: 'hidden', height: 400, background: '#D1F5E3' }}>
             <img src="/hero.png" alt="Personas de comunidades beneficiadas por Donekta" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
         </div>
@@ -214,7 +214,7 @@ export default function Home() {
             </div>
           </div>
           <div style={{ borderTop: '1px solid #1F2937', paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <p style={{ fontSize: 13, color: '#6B7280' }}>© 2024 Donekta. Todos los derechos reservados.</p>
+            <p style={{ fontSize: 13, color: '#6B7280' }}>© 2025 Donekta. Todos los derechos reservados.</p>
             <p style={{ fontSize: 13, color: '#6B7280' }}>🔒 Pagos seguros con Stripe</p>
           </div>
         </div>
