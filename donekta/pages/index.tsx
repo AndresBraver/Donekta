@@ -72,8 +72,27 @@ export default function Home() {
               </button>
             </div>
           </div>
-          <div style={{ borderRadius: 20, overflow: 'hidden', height: 400, background: '#D1F5E3' }}>
-            <img src="/hero.png" alt="Personas de comunidades beneficiadas por Donekta" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          {/* COMENTARIOS EN HERO */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxHeight: 400, overflowY: 'auto' }}>
+            {comments.length > 0 ? comments.slice(0, 3).map((c, i) => (
+              <div key={i} style={{ background: '#fff', borderRadius: 16, padding: 20, border: '1px solid #D1F5E3', boxShadow: '0 2px 8px rgba(85,181,132,0.08)' }}>
+                <p style={{ fontSize: 14, color: '#6F737D', lineHeight: 1.6, marginBottom: 12, fontStyle: 'italic' }}>"{c.comment}"</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#EDFBF4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#55B584', flexShrink: 0 }}>
+                    {(c.donor_name || 'A')[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: '#121826' }}>{c.donor_name || 'Anónimo'}</p>
+                    {c.communities?.name && <p style={{ fontSize: 11, color: '#6F737D' }}>Donó a {c.communities.name}</p>}
+                  </div>
+                </div>
+              </div>
+            )) : (
+              <div style={{ background: '#fff', borderRadius: 16, padding: 28, border: '1px solid #D1F5E3', textAlign: 'center' }}>
+                <p style={{ fontSize: 15, color: '#55B584', fontWeight: 700, marginBottom: 8 }}>💚 Sé el primero en donar</p>
+                <p style={{ fontSize: 13, color: '#6F737D', lineHeight: 1.6 }}>Aquí aparecerán los comentarios de donadores que ya apoyaron comunidades reales.</p>
+              </div>
+            )}
           </div>
         </div>
       </section>
