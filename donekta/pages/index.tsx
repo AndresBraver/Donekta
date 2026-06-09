@@ -5,19 +5,37 @@ import { supabase } from '../lib/supabase'
 
 export default function Home() {
   const [showAuth, setShowAuth] = useState(false)
-  const [comments, setComments] = useState<any[]>([])
+  const [stats, setStats] = useState({ donors: 0, communities: 0, raised: 0 })
+  const [heroComments, setHeroComments] = useState<any[]>([])
 
   useEffect(() => {
+    // Load real stats
+    Promise.all([
+      supabase.from('donations').select('donor_email', { count: 'exact' }),
+      supabase.from('communities').select('id', { count: 'exact' }).eq('status', 'approved'),
+      supabase.from('donations').select('amount'),
+    ]).then(([donors, communities, amounts]) => {
+      const totalRaised = (amounts.data || []).reduce((sum, d) => sum + d.amount, 0)
+      setStats({
+        donors: donors.count || 0,
+        communities: communities.count || 0,
+        raised: totalRaised,
+      })
+    })
+
+    // Load approved public comments
     supabase
       .from('donations')
-      .select('comment, donor_name, communities(name), created_at')
+      .select('comment, donor_name, communities(name)')
       .eq('public_comment', true)
       .eq('comment_approved', true)
       .not('comment', 'is', null)
       .order('created_at', { ascending: false })
-      .limit(6)
-      .then(({ data }) => setComments(data || []))
+      .limit(3)
+      .then(({ data }) => setHeroComments(data || []))
   }, [])
+
+  const formatStats = (n: number) => n >= 1000000 ? `$${(n/1000000).toFixed(1)}M` : n >= 1000 ? `${(n/1000).toFixed(0)}K` : n.toString()
 
   return (
     <>
@@ -73,9 +91,10 @@ export default function Home() {
               </button>
             </div>
           </div>
+
           {/* COMENTARIOS EN HERO */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxHeight: 400, overflowY: 'auto' }}>
-            {comments.length > 0 ? comments.slice(0, 3).map((c, i) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {heroComments.length > 0 ? heroComments.map((c, i) => (
               <div key={i} style={{ background: '#fff', borderRadius: 16, padding: 20, border: '1px solid #D1F5E3', boxShadow: '0 2px 8px rgba(85,181,132,0.08)' }}>
                 <p style={{ fontSize: 14, color: '#6F737D', lineHeight: 1.6, marginBottom: 12, fontStyle: 'italic' }}>"{c.comment}"</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -89,28 +108,31 @@ export default function Home() {
                 </div>
               </div>
             )) : (
-              <div style={{ background: '#fff', borderRadius: 16, padding: 28, border: '1px solid #D1F5E3', textAlign: 'center' }}>
-                <p style={{ fontSize: 15, color: '#55B584', fontWeight: 700, marginBottom: 8 }}>💚 Sé el primero en donar</p>
-                <p style={{ fontSize: 13, color: '#6F737D', lineHeight: 1.6 }}>Aquí aparecerán los comentarios de donadores que ya apoyaron comunidades reales.</p>
+              <div style={{ background: '#fff', borderRadius: 20, padding: 32, border: '1px solid #D1F5E3', textAlign: 'center' }}>
+                <p style={{ fontSize: 40, marginBottom: 12 }}>💚</p>
+                <p style={{ fontSize: 16, color: '#55B584', fontWeight: 700, marginBottom: 8 }}>Sé el primero en donar</p>
+                <p style={{ fontSize: 13, color: '#6F737D', lineHeight: 1.6 }}>Aquí aparecerán los comentarios de donadores que ya apoyaron comunidades reales en México.</p>
               </div>
             )}
           </div>
         </div>
       </section>
 
-      {/* STATS */}
+      {/* STATS REALES */}
       <section style={{ background: '#121826', padding: '48px 24px' }}>
         <div style={{ maxWidth: 900, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32, textAlign: 'center' }}>
-          {[
-            { value: '1,200+', label: 'Donadores activos' },
-            { value: '340+', label: 'Comunidades verificadas' },
-            { value: '$2.4M', label: 'MXN donados' },
-          ].map(s => (
-            <div key={s.label}>
-              <p style={{ fontSize: 36, fontWeight: 900, color: '#55B584', marginBottom: 4 }}>{s.value}</p>
-              <p style={{ fontSize: 14, color: '#9CA3AF' }}>{s.label}</p>
-            </div>
-          ))}
+          <div>
+            <p style={{ fontSize: 36, fontWeight: 900, color: '#55B584', marginBottom: 4 }}>{stats.donors > 0 ? `${stats.donors}+` : '...'}</p>
+            <p style={{ fontSize: 14, color: '#9CA3AF' }}>Donadores activos</p>
+          </div>
+          <div>
+            <p style={{ fontSize: 36, fontWeight: 900, color: '#55B584', marginBottom: 4 }}>{stats.communities > 0 ? `${stats.communities}+` : '...'}</p>
+            <p style={{ fontSize: 14, color: '#9CA3AF' }}>Comunidades verificadas</p>
+          </div>
+          <div>
+            <p style={{ fontSize: 36, fontWeight: 900, color: '#55B584', marginBottom: 4 }}>{stats.raised > 0 ? `$${formatStats(stats.raised)}` : '...'}</p>
+            <p style={{ fontSize: 14, color: '#9CA3AF' }}>MXN donados</p>
+          </div>
         </div>
       </section>
 
@@ -139,40 +161,15 @@ export default function Home() {
         </div>
       </section>
 
-      {/* COMENTARIOS REALES */}
-      {comments.length > 0 && (
-        <section style={{ padding: '80px 24px', background: '#F9FAFB' }}>
-          <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: 48 }}>
-              <h2 style={{ fontSize: 36, fontWeight: 900, color: '#121826', marginBottom: 12 }}>Lo que dicen nuestros donadores</h2>
-              <p style={{ fontSize: 16, color: '#6F737D' }}>Comentarios reales de personas que ya donaron</p>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
-              {comments.map((c, i) => (
-                <div key={i} style={{ background: '#fff', borderRadius: 16, padding: 24, border: '1px solid #F0F4F8' }}>
-                  <p style={{ fontSize: 14, color: '#6F737D', lineHeight: 1.7, marginBottom: 20 }}>"{c.comment}"</p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#EDFBF4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#55B584', flexShrink: 0 }}>
-                      {(c.donor_name || 'A')[0].toUpperCase()}
-                    </div>
-                    <div>
-                      <p style={{ fontSize: 13, fontWeight: 600, color: '#121826' }}>{c.donor_name || 'Anónimo'}</p>
-                      {c.communities?.name && <p style={{ fontSize: 11, color: '#6F737D' }}>Donó a {c.communities.name}</p>}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* COMISIONES */}
       <section style={{ padding: '80px 24px', background: '#121826' }}>
         <div style={{ maxWidth: 700, margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{ fontSize: 36, fontWeight: 900, color: '#fff', marginBottom: 16 }}>Transparencia total</h2>
-          <p style={{ fontSize: 16, color: '#9CA3AF', marginBottom: 40, lineHeight: 1.7 }}>
-            Donekta cobra una comisión del <strong style={{ color: '#55B584' }}>2%</strong> por donación. El resto llega directo a la comunidad.
+          <p style={{ fontSize: 16, color: '#9CA3AF', marginBottom: 8, lineHeight: 1.7 }}>
+            Donekta cobra una comisión del <strong style={{ color: '#55B584' }}>2%</strong> por donación para mantener activa la plataforma. El resto llega directo a la comunidad.
+          </p>
+          <p style={{ fontSize: 14, color: '#6B7280', marginBottom: 40, lineHeight: 1.6 }}>
+            Gracias a esta pequeña comisión podemos seguir conectando donadores con comunidades reales en todo México, garantizando pagos seguros y transparentes.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 40 }}>
             <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: 24 }}>
@@ -181,10 +178,35 @@ export default function Home() {
             </div>
             <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: 24 }}>
               <p style={{ fontSize: 32, fontWeight: 900, color: '#fff', marginBottom: 4 }}>2%</p>
-              <p style={{ fontSize: 14, color: '#9CA3AF' }}>Mantiene la plataforma</p>
+              <p style={{ fontSize: 14, color: '#9CA3AF' }}>Mantiene la plataforma activa</p>
             </div>
           </div>
-          <p style={{ fontSize: 13, color: '#9CA3AF' }}>🔒 Pagos seguros con Stripe · SSL · Visa · Mastercard · Amex</p>
+
+          {/* LOGOS DE PAGO */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, flexWrap: 'wrap', padding: '20px', background: 'rgba(255,255,255,0.05)', borderRadius: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 16 }}>🔒</span>
+              <span style={{ fontSize: 13, color: '#9CA3AF', fontWeight: 500 }}>SSL Seguro</span>
+            </div>
+            <span style={{ color: '#374151' }}>·</span>
+            <div style={{ background: '#635BFF', borderRadius: 6, padding: '4px 12px' }}>
+              <span style={{ fontSize: 13, color: '#fff', fontWeight: 700 }}>stripe</span>
+            </div>
+            <span style={{ color: '#374151' }}>·</span>
+            <div style={{ background: '#1A1F71', borderRadius: 6, padding: '4px 12px' }}>
+              <span style={{ fontSize: 13, color: '#fff', fontWeight: 700 }}>VISA</span>
+            </div>
+            <span style={{ color: '#374151' }}>·</span>
+            <div style={{ background: '#EB001B', borderRadius: 6, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#EB001B', border: '2px solid #fff' }} />
+              <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#F79E1B', marginLeft: -8 }} />
+              <span style={{ fontSize: 11, color: '#fff', fontWeight: 700, marginLeft: 4 }}>MC</span>
+            </div>
+            <span style={{ color: '#374151' }}>·</span>
+            <div style={{ background: '#016FD0', borderRadius: 6, padding: '4px 12px' }}>
+              <span style={{ fontSize: 13, color: '#fff', fontWeight: 700 }}>AMEX</span>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -193,7 +215,7 @@ export default function Home() {
         <div style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{ fontSize: 36, fontWeight: 900, color: '#fff', marginBottom: 16 }}>¿Listo para hacer la diferencia?</h2>
           <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.85)', marginBottom: 36, lineHeight: 1.7 }}>
-            Únete a más de 1,200 donadores que ya están cambiando vidas en México.
+            Únete a la comunidad de donadores que ya están cambiando vidas en México.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button onClick={() => setShowAuth(true)} style={{ fontSize: 15, fontWeight: 700, color: '#55B584', background: '#fff', border: 'none', cursor: 'pointer', padding: '14px 32px', borderRadius: 100 }}>
@@ -233,9 +255,14 @@ export default function Home() {
               <p style={{ fontSize: 14, color: '#6B7280' }}>andresbraver@gmail.com</p>
             </div>
           </div>
-          <div style={{ borderTop: '1px solid #1F2937', paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ borderTop: '1px solid #1F2937', paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
             <p style={{ fontSize: 13, color: '#6B7280' }}>© 2025 Donekta. Todos los derechos reservados.</p>
-            <p style={{ fontSize: 13, color: '#6B7280' }}>🔒 Pagos seguros con Stripe</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: 13, color: '#6B7280' }}>🔒 Pagos seguros</span>
+              <div style={{ background: '#635BFF', borderRadius: 4, padding: '2px 8px' }}>
+                <span style={{ fontSize: 11, color: '#fff', fontWeight: 700 }}>stripe</span>
+              </div>
+            </div>
           </div>
         </div>
       </footer>
