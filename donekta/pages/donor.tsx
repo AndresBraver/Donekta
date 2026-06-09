@@ -91,7 +91,7 @@ export default function Donor() {
   }
 
   const reset = () => {
-    setDonated(false); setSelected(null); setAmount(118); setCustomAmount('')
+    setDonated(false); setSelected(null); setAmount(180); setCustomAmount('')
     setDedicateTo(''); setComment(''); setPublicComment(false)
     setCommentSaved(false); setLastDonationId(null)
     fetchCommunities()
@@ -206,7 +206,7 @@ export default function Donor() {
 
                 <p className="text-sm font-semibold text-gray-700 mb-3">Elige un monto</p>
                 <div className="grid grid-cols-4 gap-2 mb-3">
-                  {[118, 180, 1800, 18000].map(a => (
+                  {[180, 1800, 18000, 180000].map(a => (
                     <button key={a} onClick={() => { setAmount(a); setCustomAmount('') }}
                       className={`py-2.5 text-sm rounded-xl border-2 font-semibold transition-all ${amount === a && !customAmount ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
                       ${a.toLocaleString()}
