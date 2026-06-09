@@ -85,6 +85,7 @@ export default function Donor() {
     await supabase.from('donations').update({
       comment: comment.trim(),
       public_comment: publicComment,
+      comment_approved: false,
     }).eq('id', lastDonationId)
     setCommentSaved(true)
   }
