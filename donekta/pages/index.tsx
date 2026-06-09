@@ -12,6 +12,7 @@ export default function Home() {
       .from('donations')
       .select('comment, donor_name, communities(name), created_at')
       .eq('public_comment', true)
+      .eq('comment_approved', true)
       .not('comment', 'is', null)
       .order('created_at', { ascending: false })
       .limit(6)
