@@ -1,95 +1,68 @@
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/router'
-import Head from 'next/head'
-import { Heart } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import type { NextApiRequest, NextApiResponse } from 'next'
+import { Resend } from 'resend'
+import { createClient } from '@supabase/supabase-js'
 
-export default function ResetPassword() {
-  const router = useRouter()
-  const [password, setPassword] = useState('')
-  const [confirm, setConfirm] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [done, setDone] = useState(false)
-  const [ready, setReady] = useState(false)
+const resend = new Resend(process.env.RESEND_API_KEY)
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+)
 
-  useEffect(() => {
-    supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') setReady(true)
-    })
-  }, [])
+const resetStore: Record<string, { code: string; expires: number }> = {}
 
-  const handleReset = async () => {
-    setError('')
-    if (!password || !confirm) { setError('Llena todos los campos.'); return }
-    if (password.length < 6) { setError('La contraseña debe tener al menos 6 caracteres.'); return }
-    if (password !== confirm) { setError('Las contraseñas no coinciden.'); return }
-    setLoading(true)
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') return res.status(405).end()
+  const { action, email, code, newPassword } = req.body
+
+  // SEND CODE
+  if (action === 'send') {
+    if (!email) return res.status(400).json({ error: 'Email requerido' })
+    const otp = String(Math.floor(Math.random() * 1000000)).padStart(6, '0')
+    resetStore[email] = { code: otp, expires: Date.now() + 10 * 60 * 1000 }
     try {
-      const { error } = await supabase.auth.updateUser({ password })
-      if (error) throw error
-      setDone(true)
-      setTimeout(() => router.push('/'), 2000)
+      await resend.emails.send({
+        from: 'Donekta <hola@donekta.com>',
+        to: email,
+        subject: 'Recupera tu contraseña — Donekta',
+        html: `
+          <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:40px 24px;">
+            <h1 style="color:#121826;font-size:24px;font-weight:900;text-align:center;">Donekta</h1>
+            <div style="background:#EDFBF4;border-radius:16px;padding:32px;text-align:center;margin:24px 0;">
+              <p style="color:#6F737D;font-size:14px;margin-bottom:16px;">Tu código para recuperar tu contraseña:</p>
+              <div style="font-size:48px;font-weight:900;color:#55B584;letter-spacing:12px;font-family:monospace;">${otp}</div>
+              <p style="color:#9CA3AF;font-size:12px;margin-top:16px;">Expira en 10 minutos</p>
+            </div>
+          </div>
+        `
+      })
+      return res.status(200).json({ ok: true })
     } catch (e: any) {
-      setError(e.message || 'Error al actualizar contraseña')
-    } finally {
-      setLoading(false)
+      return res.status(500).json({ error: 'Error al enviar correo' })
     }
   }
 
-  return (
-    <>
-      <Head><title>Recuperar contraseña — Donekta</title></Head>
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <div className="w-full max-w-md">
-          <div className="flex items-center justify-center gap-2 mb-8">
-            <div className="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center">
-              <Heart className="w-4 h-4 text-white fill-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">Donekta</span>
-          </div>
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-            {done ? (
-              <div className="text-center">
-                <div className="text-4xl mb-4">✅</div>
-                <h2 className="text-xl font-black text-gray-900 mb-2">¡Contraseña actualizada!</h2>
-                <p className="text-sm text-gray-500">Redirigiendo al inicio...</p>
-              </div>
-            ) : !ready ? (
-              <div className="text-center">
-                <div className="text-4xl mb-4">🔗</div>
-                <h2 className="text-xl font-black text-gray-900 mb-2">Enlace inválido</h2>
-                <p className="text-sm text-gray-500 mb-4">Este enlace ya expiró o es inválido.</p>
-                <a href="/" className="text-emerald-600 text-sm font-medium hover:text-emerald-700">← Volver al inicio</a>
-              </div>
-            ) : (
-              <>
-                <h2 className="text-xl font-black text-gray-900 mb-6">Nueva contraseña</h2>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Nueva contraseña</label>
-                    <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                      placeholder="Mínimo 6 caracteres"
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirmar contraseña</label>
-                    <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)}
-                      placeholder="Repite tu contraseña"
-                      onKeyDown={e => e.key === 'Enter' && handleReset()}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400" />
-                  </div>
-                  {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">{error}</div>}
-                  <button onClick={handleReset} disabled={loading || !password || !confirm}
-                    className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-semibold py-3 rounded-xl text-sm">
-                    {loading ? 'Guardando...' : 'Guardar nueva contraseña'}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    </>
-  )
+  // VERIFY CODE + UPDATE PASSWORD
+  if (action === 'verify') {
+    if (!email || !code || !newPassword) return res.status(400).json({ error: 'Datos incompletos' })
+    const stored = resetStore[email]
+    if (!stored) return res.status(400).json({ error: 'Solicita un nuevo código' })
+    if (Date.now() > stored.expires) {
+      delete resetStore[email]
+      return res.status(400).json({ error: 'El código expiró. Solicita uno nuevo.' })
+    }
+    if (stored.code !== code) return res.status(400).json({ error: 'Código incorrecto' })
+    delete resetStore[email]
+    try {
+      const { data: users } = await supabase.auth.admin.listUsers()
+      const user = users?.users?.find((u: any) => u.email === email)
+      if (!user) return res.status(404).json({ error: 'Usuario no encontrado' })
+      const { error } = await supabase.auth.admin.updateUserById(user.id, { password: newPassword })
+      if (error) throw error
+      return res.status(200).json({ ok: true })
+    } catch (e: any) {
+      return res.status(500).json({ error: e.message || 'Error al actualizar contraseña' })
+    }
+  }
+
+  return res.status(400).json({ error: 'Acción inválida' })
 }
