@@ -1,22 +1,22 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { Resend } from 'resend'
-import { createClient } from '@supabase/supabase-js'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-)
+
+// In-memory store (works for single instance, fine for now)
+const otpStore: Record<string, { code: string; expires: number }> = {}
+
+export { otpStore }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end()
   const { email } = req.body
   if (!email) return res.status(400).json({ error: 'Email requerido' })
 
-  const code = Math.floor(100000 + Math.random() * 900000).toString()
-  const expires = new Date(Date.now() + 10 * 60 * 1000).toISOString()
+  const code = String(Math.floor(Math.random() * 1000000)).padStart(6, '0')
+  const expires = Date.now() + 10 * 60 * 1000 // 10 min
 
-  await supabase.from('otp_codes').upsert([{ email, code, expires_at: expires }])
+  otpStore[email] = { code, expires }
 
   try {
     await resend.emails.send({
