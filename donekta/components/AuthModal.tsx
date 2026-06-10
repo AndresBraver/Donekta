@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useRouter } from 'next/router'
 import { X, Heart, Users } from 'lucide-react'
@@ -19,6 +20,7 @@ export default function AuthModal({ onClose }: Props) {
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [showTerms, setShowTerms] = useState(false)
   const [showPrivacy, setShowPrivacy] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
 
   const sendOtp = async (emailTo: string) => {
     await fetch('/api/send-otp', {
@@ -128,6 +130,23 @@ export default function AuthModal({ onClose }: Props) {
       onClose()
     } catch (e: any) {
       setError(e.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleResetPassword = async () => {
+    setError('')
+    if (!email) { setError('Escribe tu correo primero.'); return }
+    setLoading(true)
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      })
+      if (error) throw error
+      setResetSent(true)
+    } catch (e: any) {
+      setError(e.message || 'Error al enviar correo')
     } finally {
       setLoading(false)
     }
@@ -281,6 +300,12 @@ export default function AuthModal({ onClose }: Props) {
                       onKeyDown={e => e.key === 'Enter' && (mode === 'login' ? handleLogin() : handleRegister())}
                       className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400" />
                   </div>
+                  {mode === 'login' && (
+                    <button type="button" onClick={handleResetPassword} disabled={loading}
+                      className="text-xs text-emerald-600 hover:text-emerald-700 text-right w-full -mt-2">
+                      {resetSent ? '✓ Correo enviado — revisa tu bandeja' : '¿Olvidaste tu contraseña?'}
+                    </button>
+                  )}
                   {mode === 'register' && (
                     <label className="flex items-start gap-2 cursor-pointer">
                       <input type="checkbox" checked={acceptedTerms} onChange={e => setAcceptedTerms(e.target.checked)}
