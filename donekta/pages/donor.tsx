@@ -16,6 +16,7 @@ export default function Donor() {
   const [donorName, setDonorName] = useState('')
   const [donorEmail, setDonorEmail] = useState('')
   const [dedicateTo, setDedicateTo] = useState('')
+  const [frequency, setFrequency] = useState<'única' | 'mensual' | 'trimestral' | 'semestral' | 'anual'>('única')
   const [comment, setComment] = useState('')
   const [publicComment, setPublicComment] = useState(false)
   const [commentSaved, setCommentSaved] = useState(false)
@@ -92,7 +93,7 @@ export default function Donor() {
 
   const reset = () => {
     setDonated(false); setSelected(null); setAmount(180); setCustomAmount('')
-    setDedicateTo(''); setComment(''); setPublicComment(false)
+    setDedicateTo(''); setComment(''); setPublicComment(false); setFrequency('única')
     setCommentSaved(false); setLastDonationId(null)
     fetchCommunities()
   }
@@ -203,6 +204,21 @@ export default function Donor() {
                 {(selected.description || selected.mission) && (
                   <p className="text-gray-600 text-sm leading-relaxed mb-6">{selected.description || selected.mission}</p>
                 )}
+
+                <div className="mb-6">
+                  <p className="text-sm font-semibold text-gray-700 mb-3">Frecuencia de donación</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(['única', 'mensual', 'trimestral', 'semestral', 'anual'] as const).map(f => (
+                      <button key={f} onClick={() => setFrequency(f)}
+                        className={`py-2 text-xs rounded-xl border-2 font-semibold capitalize transition-all ${frequency === f ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+                        {f}
+                      </button>
+                    ))}
+                  </div>
+                  {frequency !== 'única' && (
+                    <p className="text-xs text-emerald-600 mt-2">✓ Se cobrará ${amount.toLocaleString()} MXN de forma {frequency}</p>
+                  )}
+                </div>
 
                 <p className="text-sm font-semibold text-gray-700 mb-3">Elige un monto</p>
                 <div className="grid grid-cols-4 gap-2 mb-3">
