@@ -13,19 +13,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { email } = req.body
   if (!email) return res.status(400).json({ error: 'Email requerido' })
 
-  // Check user exists
-  const { data: users } = await supabase.auth.admin.listUsers()
-  const userExists = users?.users?.find(u => u.email === email)
-  if (!userExists) return res.status(404).json({ error: 'No encontramos una cuenta con ese correo' })
-
-  // Generate 6-digit code
   const code = Math.floor(100000 + Math.random() * 900000).toString()
-  const expires = new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 min
+  const expires = new Date(Date.now() + 10 * 60 * 1000).toISOString()
 
-  // Save code in a temp table or user metadata
   await supabase.from('otp_codes').upsert([{ email, code, expires_at: expires }])
 
-  // Send email
   try {
     await resend.emails.send({
       from: 'Donekta <hola@donekta.com>',
