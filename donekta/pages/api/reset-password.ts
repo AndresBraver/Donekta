@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
-import { otpStore } from './send-otp'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const supabase = createClient(
@@ -16,7 +15,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (action === 'send') {
     if (!email) return res.status(400).json({ error: 'Email requerido' })
     const otp = String(Math.floor(Math.random() * 1000000)).padStart(6, '0')
-    otpStore[`reset_${email}`] = { code: otp, expires: Date.now() + 10 * 60 * 1000 }
+    const expires = new Date(Date.now() + 10 * 60 * 1000).toISOString()
+    
+    // Use reset_ prefix to differentiate from login OTPs
+    await supabase.from('otp_codes').upsert([{ 
+      email: `reset_${email}`, 
+      code: otp, 
+      expires_at: expires 
+    }], { onConflict: 'email' })
+
     try {
       await resend.emails.send({
         from: 'Donekta <hola@donekta.com>',
@@ -41,20 +48,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (action === 'verify') {
     if (!email || !code || !newPassword) return res.status(400).json({ error: 'Datos incompletos' })
-    const stored = otpStore[`reset_${email}`]
-    if (!stored) return res.status(400).json({ error: 'Solicita un nuevo código' })
-    if (Date.now() > stored.expires) {
-      delete otpStore[`reset_${email}`]
+    
+    const { data, error } = await supabase
+      .from('otp_codes')
+      .select('*')
+      .eq('email', `reset_${email}`)
+      .eq('code', code)
+      .single()
+
+    if (error || !data) return res.status(400).json({ error: 'Código incorrecto' })
+    if (new Date(data.expires_at) < new Date()) {
+      await supabase.from('otp_codes').delete().eq('email', `reset_${email}`)
       return res.status(400).json({ error: 'El código expiró. Solicita uno nuevo.' })
     }
-    if (stored.code !== code) return res.status(400).json({ error: 'Código incorrecto' })
-    delete otpStore[`reset_${email}`]
+    await supabase.from('otp_codes').delete().eq('email', `reset_${email}`)
+
     try {
       const { data: users } = await supabase.auth.admin.listUsers()
       const user = users?.users?.find((u: any) => u.email === email)
       if (!user) return res.status(404).json({ error: 'Usuario no encontrado' })
-      const { error } = await supabase.auth.admin.updateUserById(user.id, { password: newPassword })
-      if (error) throw error
+      const { error: updateError } = await supabase.auth.admin.updateUserById(user.id, { password: newPassword })
+      if (updateError) throw updateError
       return res.status(200).json({ ok: true })
     } catch (e: any) {
       return res.status(500).json({ error: e.message || 'Error al actualizar contraseña' })
