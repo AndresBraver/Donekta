@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
+import { otpStore } from './send-otp'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const supabase = createClient(
@@ -8,17 +9,14 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 )
 
-const resetStore: Record<string, { code: string; expires: number }> = {}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end()
   const { action, email, code, newPassword } = req.body
 
-  // SEND CODE
   if (action === 'send') {
     if (!email) return res.status(400).json({ error: 'Email requerido' })
     const otp = String(Math.floor(Math.random() * 1000000)).padStart(6, '0')
-    resetStore[email] = { code: otp, expires: Date.now() + 10 * 60 * 1000 }
+    otpStore[`reset_${email}`] = { code: otp, expires: Date.now() + 10 * 60 * 1000 }
     try {
       await resend.emails.send({
         from: 'Donekta <hola@donekta.com>',
@@ -41,17 +39,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  // VERIFY CODE + UPDATE PASSWORD
   if (action === 'verify') {
     if (!email || !code || !newPassword) return res.status(400).json({ error: 'Datos incompletos' })
-    const stored = resetStore[email]
+    const stored = otpStore[`reset_${email}`]
     if (!stored) return res.status(400).json({ error: 'Solicita un nuevo código' })
     if (Date.now() > stored.expires) {
-      delete resetStore[email]
+      delete otpStore[`reset_${email}`]
       return res.status(400).json({ error: 'El código expiró. Solicita uno nuevo.' })
     }
     if (stored.code !== code) return res.status(400).json({ error: 'Código incorrecto' })
-    delete resetStore[email]
+    delete otpStore[`reset_${email}`]
     try {
       const { data: users } = await supabase.auth.admin.listUsers()
       const user = users?.users?.find((u: any) => u.email === email)
