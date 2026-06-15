@@ -26,10 +26,10 @@ export default function AuthModal({ onClose }: Props) {
   const [showPrivacy, setShowPrivacy] = useState(false)
 
   const sendOtp = async (emailTo: string) => {
-    await fetch('/api/send-otp', {
+    await fetch('/api/otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: emailTo })
+      body: JSON.stringify({ action: 'send', email: emailTo, type: 'login' })
     })
   }
 
@@ -55,10 +55,10 @@ export default function AuthModal({ onClose }: Props) {
     if (!otp) { setError('Ingresa el código que recibiste.'); return }
     setLoading(true)
     try {
-      const res = await fetch('/api/verify-otp', {
+      const res = await fetch('/api/otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code: otp })
+        body: JSON.stringify({ action: 'verify', email, code: otp, type: 'login' })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Código incorrecto')
@@ -122,10 +122,10 @@ export default function AuthModal({ onClose }: Props) {
     if (!otp) { setError('Ingresa el código que recibiste.'); return }
     setLoading(true)
     try {
-      const res = await fetch('/api/verify-otp', {
+      const res = await fetch('/api/otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code: otp })
+        body: JSON.stringify({ action: 'verify', email, code: otp, type: 'login' })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Código incorrecto')
@@ -143,10 +143,10 @@ export default function AuthModal({ onClose }: Props) {
     if (!email) { setError('Escribe tu correo electrónico.'); return }
     setLoading(true)
     try {
-      const res = await fetch('/api/reset-password', {
+      const res = await fetch('/api/otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'send', email })
+        body: JSON.stringify({ action: 'send', email, type: 'reset' })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Error al enviar correo')
@@ -171,10 +171,10 @@ export default function AuthModal({ onClose }: Props) {
     if (newPassword !== confirmPassword) { setError('Las contraseñas no coinciden.'); return }
     setLoading(true)
     try {
-      const res = await fetch('/api/reset-password', {
+      const res = await fetch('/api/otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'verify', email, code: otp, newPassword })
+        body: JSON.stringify({ action: 'verify', email, code: otp, newPassword, type: 'reset' })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Error al actualizar contraseña')
