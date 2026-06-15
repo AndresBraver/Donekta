@@ -16,10 +16,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!email) return res.status(400).json({ error: 'Email requerido' })
     const otp = String(Math.floor(Math.random() * 1000000)).padStart(6, '0')
     const expires = new Date(Date.now() + 10 * 60 * 1000).toISOString()
-    
-    await supabase.from('otp_codes').upsert([{ 
-      email, code: otp, expires_at: expires, type: 'reset' 
-    }], { onConflict: 'email,type' })
+
+    await supabase.from('otp_codes').delete().eq('email', email).eq('type', 'reset')
+    await supabase.from('otp_codes').insert([{ email, code: otp, expires_at: expires, type: 'reset' }])
 
     try {
       await resend.emails.send({
@@ -45,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (action === 'verify') {
     if (!email || !code || !newPassword) return res.status(400).json({ error: 'Datos incompletos' })
-    
+
     const { data, error } = await supabase
       .from('otp_codes')
       .select('*')
