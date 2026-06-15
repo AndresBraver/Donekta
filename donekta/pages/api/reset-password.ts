@@ -17,12 +17,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const otp = String(Math.floor(Math.random() * 1000000)).padStart(6, '0')
     const expires = new Date(Date.now() + 10 * 60 * 1000).toISOString()
     
-    // Use reset_ prefix to differentiate from login OTPs
     await supabase.from('otp_codes').upsert([{ 
-      email: `reset_${email}`, 
-      code: otp, 
-      expires_at: expires 
-    }], { onConflict: 'email' })
+      email, code: otp, expires_at: expires, type: 'reset' 
+    }], { onConflict: 'email,type' })
 
     try {
       await resend.emails.send({
@@ -52,16 +49,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { data, error } = await supabase
       .from('otp_codes')
       .select('*')
-      .eq('email', `reset_${email}`)
+      .eq('email', email)
       .eq('code', code)
+      .eq('type', 'reset')
       .single()
 
     if (error || !data) return res.status(400).json({ error: 'Código incorrecto' })
     if (new Date(data.expires_at) < new Date()) {
-      await supabase.from('otp_codes').delete().eq('email', `reset_${email}`)
+      await supabase.from('otp_codes').delete().eq('email', email).eq('type', 'reset')
       return res.status(400).json({ error: 'El código expiró. Solicita uno nuevo.' })
     }
-    await supabase.from('otp_codes').delete().eq('email', `reset_${email}`)
+    await supabase.from('otp_codes').delete().eq('email', email).eq('type', 'reset')
 
     try {
       const { data: users } = await supabase.auth.admin.listUsers()
