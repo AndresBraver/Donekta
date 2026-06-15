@@ -8,6 +8,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 )
 
+export { supabase as otpStore }
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end()
   const { email } = req.body
@@ -16,9 +18,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const code = String(Math.floor(Math.random() * 1000000)).padStart(6, '0')
   const expires = new Date(Date.now() + 10 * 60 * 1000).toISOString()
 
-  await supabase.from('otp_codes').upsert([{ 
-    email, code, expires_at: expires, type: 'login' 
-  }], { onConflict: 'email,type' })
+  // Delete existing and insert fresh
+  await supabase.from('otp_codes').delete().eq('email', email).eq('type', 'login')
+  await supabase.from('otp_codes').insert([{ email, code, expires_at: expires, type: 'login' }])
 
   try {
     await resend.emails.send({
@@ -33,6 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             <div style="font-size:48px;font-weight:900;color:#55B584;letter-spacing:12px;font-family:monospace;">${code}</div>
             <p style="color:#9CA3AF;font-size:12px;margin-top:16px;">Expira en 10 minutos</p>
           </div>
+          <p style="color:#9CA3AF;font-size:12px;text-align:center;">Si no solicitaste este código, ignora este correo.</p>
         </div>
       `
     })
