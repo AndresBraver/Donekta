@@ -8,9 +8,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 )
 
-// In-memory fallback
-export const otpStore: Record<string, { code: string; expires: number }> = {}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end()
   const { email } = req.body
@@ -19,8 +16,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const code = String(Math.floor(Math.random() * 1000000)).padStart(6, '0')
   const expires = new Date(Date.now() + 10 * 60 * 1000).toISOString()
 
-  // Save to Supabase with service role (bypasses RLS)
-  await supabase.from('otp_codes').upsert([{ email, code, expires_at: expires }], { onConflict: 'email' })
+  await supabase.from('otp_codes').upsert([{ 
+    email, code, expires_at: expires, type: 'login' 
+  }], { onConflict: 'email,type' })
 
   try {
     await resend.emails.send({
@@ -28,14 +26,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       to: email,
       subject: 'Tu código de acceso — Donekta',
       html: `
-        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 24px;">
-          <h1 style="color: #121826; font-size: 24px; font-weight: 900; text-align: center;">Donekta</h1>
-          <div style="background: #EDFBF4; border-radius: 16px; padding: 32px; text-align: center; margin: 24px 0;">
-            <p style="color: #6F737D; font-size: 14px; margin-bottom: 16px;">Tu código de acceso es:</p>
-            <div style="font-size: 48px; font-weight: 900; color: #55B584; letter-spacing: 12px; font-family: monospace;">${code}</div>
-            <p style="color: #9CA3AF; font-size: 12px; margin-top: 16px;">Expira en 10 minutos</p>
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:40px 24px;">
+          <h1 style="color:#121826;font-size:24px;font-weight:900;text-align:center;">Donekta</h1>
+          <div style="background:#EDFBF4;border-radius:16px;padding:32px;text-align:center;margin:24px 0;">
+            <p style="color:#6F737D;font-size:14px;margin-bottom:16px;">Tu código de acceso:</p>
+            <div style="font-size:48px;font-weight:900;color:#55B584;letter-spacing:12px;font-family:monospace;">${code}</div>
+            <p style="color:#9CA3AF;font-size:12px;margin-top:16px;">Expira en 10 minutos</p>
           </div>
-          <p style="color: #9CA3AF; font-size: 12px; text-align: center;">Si no solicitaste este código, ignora este correo.</p>
         </div>
       `
     })
