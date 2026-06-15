@@ -16,14 +16,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .select('*')
     .eq('email', email)
     .eq('code', code)
+    .eq('type', 'login')
     .single()
 
   if (error || !data) return res.status(400).json({ error: 'Código incorrecto' })
   if (new Date(data.expires_at) < new Date()) {
-    await supabase.from('otp_codes').delete().eq('email', email)
+    await supabase.from('otp_codes').delete().eq('email', email).eq('type', 'login')
     return res.status(400).json({ error: 'El código expiró. Solicita uno nuevo.' })
   }
 
-  await supabase.from('otp_codes').delete().eq('email', email)
-  res.status(200).json({ ok: true, verified: true })
+  await supabase.from('otp_codes').delete().eq('email', email).eq('type', 'login')
+  res.status(200).json({ ok: true })
 }
