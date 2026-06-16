@@ -5,63 +5,25 @@ import { supabase } from '../lib/supabase'
 
 interface Props { onClose: () => void }
 
-type Mode = 'login' | 'register' | 'reset'
-type Step = 'form' | 'otp' | 'reset-otp' | 'new-password'
-
 export default function AuthModal({ onClose }: Props) {
   const router = useRouter()
-  const [mode, setMode] = useState<Mode>('login')
-  const [step, setStep] = useState<Step>('form')
+  const [mode, setMode] = useState<'login' | 'register' | 'reset'>('login')
   const [userType, setUserType] = useState<'donor' | 'community' | null>(null)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
   const [name, setName] = useState('')
-  const [otp, setOtp] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [showTerms, setShowTerms] = useState(false)
   const [showPrivacy, setShowPrivacy] = useState(false)
-
-  const sendOtp = async (emailTo: string) => {
-    await fetch('/api/otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'send', email: emailTo, type: 'login' })
-    })
-  }
+  const [resetSent, setResetSent] = useState(false)
 
   const handleLogin = async () => {
     setError('')
     if (!email || !password) { setError('Por favor llena todos los campos.'); return }
     setLoading(true)
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) throw error
-      await supabase.auth.signOut()
-      await sendOtp(email)
-      setStep('otp')
-    } catch (e: any) {
-      setError(e.message || 'Correo o contraseña incorrectos')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleVerifyLoginOtp = async () => {
-    setError('')
-    if (!otp) { setError('Ingresa el código que recibiste.'); return }
-    setLoading(true)
-    try {
-      const res = await fetch('/api/otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'verify', email, code: otp, type: 'login' })
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Código incorrecto')
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
       if (email === 'andresbraver@gmail.com') {
@@ -72,7 +34,7 @@ export default function AuthModal({ onClose }: Props) {
       }
       onClose()
     } catch (e: any) {
-      setError(e.message)
+      setError(e.message || 'Correo o contraseña incorrectos')
     } finally {
       setLoading(false)
     }
@@ -82,7 +44,7 @@ export default function AuthModal({ onClose }: Props) {
     setError('')
     if (!email || !password) { setError('Por favor llena todos los campos.'); return }
     if (!userType) { setError('Elige si eres donador o comunidad.'); return }
-    if (!acceptedTerms) { setError('Debes aceptar los Términos y Condiciones para continuar.'); return }
+    if (!acceptedTerms) { setError('Debes aceptar los Términos y Condiciones.'); return }
     setLoading(true)
     try {
       const { error } = await supabase.auth.signUp({
@@ -107,8 +69,8 @@ export default function AuthModal({ onClose }: Props) {
         onClose()
         router.push('/community-pending')
       } else {
-        await sendOtp(email)
-        setStep('otp')
+        router.push('/donor')
+        onClose()
       }
     } catch (e: any) {
       setError(e.message || 'Ocurrió un error')
@@ -117,30 +79,9 @@ export default function AuthModal({ onClose }: Props) {
     }
   }
 
-  const handleVerifyRegisterOtp = async () => {
+  const handleReset = async () => {
     setError('')
-    if (!otp) { setError('Ingresa el código que recibiste.'); return }
-    setLoading(true)
-    try {
-      const res = await fetch('/api/otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'verify', email, code: otp, type: 'login' })
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Código incorrecto')
-      router.push('/donor')
-      onClose()
-    } catch (e: any) {
-      setError(e.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleSendReset = async () => {
-    setError('')
-    if (!email) { setError('Escribe tu correo electrónico.'); return }
+    if (!email) { setError('Escribe tu correo.'); return }
     setLoading(true)
     try {
       const res = await fetch('/api/otp', {
@@ -149,44 +90,10 @@ export default function AuthModal({ onClose }: Props) {
         body: JSON.stringify({ action: 'send', email, type: 'reset' })
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Error al enviar correo')
-      setStep('reset-otp')
+      if (!res.ok) throw new Error(data.error)
+      setResetSent(true)
     } catch (e: any) {
-      setError(e.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleVerifyResetOtp = () => {
-    setError('')
-    if (!otp || otp.length !== 6) { setError('Ingresa el código de 6 dígitos.'); return }
-    setStep('new-password')
-  }
-
-  const handleNewPassword = async () => {
-    setError('')
-    if (!newPassword || !confirmPassword) { setError('Llena todos los campos.'); return }
-    if (newPassword.length < 6) { setError('Mínimo 6 caracteres.'); return }
-    if (newPassword !== confirmPassword) { setError('Las contraseñas no coinciden.'); return }
-    setLoading(true)
-    try {
-      const res = await fetch('/api/otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'verify', email, code: otp, newPassword, type: 'reset' })
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Error al actualizar contraseña')
-      setMode('login')
-      setStep('form')
-      setOtp('')
-      setNewPassword('')
-      setConfirmPassword('')
-      setError('')
-      alert('✅ Contraseña actualizada. Ya puedes iniciar sesión.')
-    } catch (e: any) {
-      setError(e.message)
+      setError(e.message || 'Error al enviar correo')
     } finally {
       setLoading(false)
     }
@@ -201,12 +108,10 @@ export default function AuthModal({ onClose }: Props) {
         </div>
         <div className="overflow-y-auto p-5 text-sm text-gray-600 space-y-4">
           <p><strong className="text-gray-900">1. Aceptación</strong><br />Al usar Donekta, aceptas estos términos.</p>
-          <p><strong className="text-gray-900">2. Servicio</strong><br />Donekta conecta donadores con comunidades verificadas en México. Cobramos 2% por donación para mantener el servicio.</p>
+          <p><strong className="text-gray-900">2. Servicio</strong><br />Donekta conecta donadores con comunidades verificadas en México. Cobramos 2% por donación.</p>
           <p><strong className="text-gray-900">3. Donaciones</strong><br />Las donaciones son voluntarias y no reembolsables salvo error técnico comprobable.</p>
-          <p><strong className="text-gray-900">4. Comunidades</strong><br />Las comunidades son verificadas por Donekta. Nos reservamos el derecho de suspender comunidades que incumplan las políticas.</p>
-          <p><strong className="text-gray-900">5. Pagos</strong><br />Los pagos se procesan de forma segura a través de Stripe. No almacenamos datos de tarjetas.</p>
-          <p><strong className="text-gray-900">6. Responsabilidad</strong><br />Donekta actúa como intermediario y no es responsable por el uso de los fondos una vez transferidos.</p>
-          <p><strong className="text-gray-900">7. Contacto</strong><br />andresbraver@gmail.com</p>
+          <p><strong className="text-gray-900">4. Pagos</strong><br />Los pagos se procesan de forma segura a través de Stripe. No almacenamos datos de tarjetas.</p>
+          <p><strong className="text-gray-900">5. Contacto</strong><br />andresbraver@gmail.com</p>
         </div>
         <div className="p-5 border-t border-gray-100">
           <button onClick={() => { setShowTerms(false); setAcceptedTerms(true) }}
@@ -226,12 +131,10 @@ export default function AuthModal({ onClose }: Props) {
           <button onClick={() => setShowPrivacy(false)} className="text-gray-400 hover:text-gray-600">✕</button>
         </div>
         <div className="overflow-y-auto p-5 text-sm text-gray-600 space-y-4">
-          <p><strong className="text-gray-900">1. Datos que recopilamos</strong><br />Nombre, correo electrónico y datos de donaciones. No almacenamos datos de tarjetas.</p>
-          <p><strong className="text-gray-900">2. Uso de datos</strong><br />Para procesar donaciones, enviarte confirmaciones y mejorar la plataforma. No vendemos tus datos.</p>
-          <p><strong className="text-gray-900">3. Seguridad</strong><br />Protegemos tus datos con encriptación SSL. Los pagos los procesa Stripe (PCI DSS).</p>
-          <p><strong className="text-gray-900">4. Cookies</strong><br />Usamos cookies solo para mantener tu sesión activa.</p>
-          <p><strong className="text-gray-900">5. Tus derechos</strong><br />Puedes solicitar eliminación de tu cuenta en: andresbraver@gmail.com</p>
-          <p><strong className="text-gray-900">6. Retención</strong><br />Conservamos registros de donaciones por 5 años para cumplir con obligaciones fiscales.</p>
+          <p><strong className="text-gray-900">1. Datos</strong><br />Recopilamos nombre, correo y datos de donaciones. No almacenamos datos de tarjetas.</p>
+          <p><strong className="text-gray-900">2. Uso</strong><br />Para procesar donaciones y mejorar la plataforma. No vendemos tus datos.</p>
+          <p><strong className="text-gray-900">3. Seguridad</strong><br />SSL + Stripe PCI DSS.</p>
+          <p><strong className="text-gray-900">4. Contacto</strong><br />andresbraver@gmail.com</p>
         </div>
         <div className="p-5 border-t border-gray-100">
           <button onClick={() => { setShowPrivacy(false); setAcceptedTerms(true) }}
@@ -242,189 +145,6 @@ export default function AuthModal({ onClose }: Props) {
       </div>
     </div>
   )
-
-  const renderContent = () => {
-    if (step === 'otp') return (
-      <div className="space-y-4">
-        <div className="text-center mb-4">
-          <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">📧</div>
-          <h2 className="text-xl font-black text-gray-900 mb-2">Revisa tu correo</h2>
-          <p className="text-sm text-gray-500">Enviamos un código a <strong>{email}</strong></p>
-        </div>
-        <input type="text" value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-          placeholder="000000" maxLength={6}
-          onKeyDown={e => e.key === 'Enter' && (mode === 'login' ? handleVerifyLoginOtp() : handleVerifyRegisterOtp())}
-          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-center text-3xl tracking-widest font-mono focus:outline-none focus:border-emerald-400" />
-        {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">{error}</div>}
-        <button onClick={mode === 'login' ? handleVerifyLoginOtp : handleVerifyRegisterOtp}
-          disabled={loading || otp.length !== 6}
-          className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-semibold py-3 rounded-xl text-sm">
-          {loading ? 'Verificando...' : 'Entrar →'}
-        </button>
-        <button onClick={() => { setStep('form'); setOtp(''); setError('') }}
-          className="w-full text-sm text-gray-400 hover:text-gray-600 py-2">← Volver</button>
-      </div>
-    )
-
-    if (step === 'reset-otp') return (
-      <div className="space-y-4">
-        <div className="text-center mb-4">
-          <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">🔑</div>
-          <h2 className="text-xl font-black text-gray-900 mb-2">Código enviado</h2>
-          <p className="text-sm text-gray-500">Ingresa el código que llegó a <strong>{email}</strong></p>
-        </div>
-        <input type="text" value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-          placeholder="000000" maxLength={6}
-          onKeyDown={e => e.key === 'Enter' && handleVerifyResetOtp()}
-          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-center text-3xl tracking-widest font-mono focus:outline-none focus:border-emerald-400" />
-        {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">{error}</div>}
-        <button onClick={handleVerifyResetOtp} disabled={loading || otp.length !== 6}
-          className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-semibold py-3 rounded-xl text-sm">
-          {loading ? 'Verificando...' : 'Continuar →'}
-        </button>
-        <button onClick={() => { setStep('form'); setMode('reset'); setOtp(''); setError('') }}
-          className="w-full text-sm text-gray-400 hover:text-gray-600 py-2">← Volver</button>
-      </div>
-    )
-
-    if (step === 'new-password') return (
-      <div className="space-y-4">
-        <div className="text-center mb-4">
-          <h2 className="text-xl font-black text-gray-900 mb-2">Nueva contraseña</h2>
-          <p className="text-sm text-gray-500">Elige una nueva contraseña para tu cuenta</p>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Nueva contraseña</label>
-          <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
-            placeholder="Mínimo 6 caracteres"
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirmar contraseña</label>
-          <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
-            placeholder="Repite tu contraseña"
-            onKeyDown={e => e.key === 'Enter' && handleNewPassword()}
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400" />
-        </div>
-        {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">{error}</div>}
-        <button onClick={handleNewPassword} disabled={loading || !newPassword || !confirmPassword}
-          className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-semibold py-3 rounded-xl text-sm">
-          {loading ? 'Guardando...' : 'Guardar contraseña'}
-        </button>
-      </div>
-    )
-
-    if (mode === 'reset') return (
-      <div className="space-y-4">
-        <div className="text-center mb-4">
-          <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">🔒</div>
-          <h2 className="text-xl font-black text-gray-900 mb-2">Recuperar contraseña</h2>
-          <p className="text-sm text-gray-500">Te enviaremos un código a tu correo</p>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Correo electrónico</label>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@email.com"
-            onKeyDown={e => e.key === 'Enter' && handleSendReset()}
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400" />
-        </div>
-        {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">{error}</div>}
-        <button onClick={handleSendReset} disabled={loading || !email}
-          className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-semibold py-3 rounded-xl text-sm">
-          {loading ? 'Enviando...' : 'Enviar código →'}
-        </button>
-        <button onClick={() => { setMode('login'); setError('') }}
-          className="w-full text-sm text-gray-400 hover:text-gray-600 py-2">← Volver al login</button>
-      </div>
-    )
-
-    return (
-      <div>
-        <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
-          <button onClick={() => { setMode('login'); setError('') }}
-            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${mode === 'login' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}>
-            Iniciar sesión
-          </button>
-          <button onClick={() => { setMode('register'); setError('') }}
-            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${mode === 'register' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}>
-            Registrarse
-          </button>
-        </div>
-        <div className="space-y-4">
-          {mode === 'register' && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Nombre completo</label>
-                <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Tu nombre"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">¿Cómo deseas unirte?</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button onClick={() => setUserType('donor')}
-                    className={`rounded-xl border-2 p-4 text-left transition-all ${userType === 'donor' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                    <Heart className={`w-5 h-5 mb-2 ${userType === 'donor' ? 'text-emerald-500' : 'text-gray-400'}`} />
-                    <p className="font-semibold text-gray-900 text-sm">Donador</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Quiero apoyar comunidades</p>
-                  </button>
-                  <button onClick={() => setUserType('community')}
-                    className={`rounded-xl border-2 p-4 text-left transition-all ${userType === 'community' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                    <Users className={`w-5 h-5 mb-2 ${userType === 'community' ? 'text-emerald-500' : 'text-gray-400'}`} />
-                    <p className="font-semibold text-gray-900 text-sm">Comunidad</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Represento una comunidad</p>
-                  </button>
-                </div>
-                {userType === 'community' && (
-                  <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
-                    📧 Tu solicitud será revisada en 1-3 días hábiles.
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Correo electrónico</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@email.com"
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Contraseña</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-              placeholder="Mínimo 6 caracteres"
-              onKeyDown={e => e.key === 'Enter' && (mode === 'login' ? handleLogin() : handleRegister())}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400" />
-          </div>
-          {mode === 'login' && (
-            <button type="button" onClick={() => { setMode('reset'); setError('') }}
-              className="text-xs text-emerald-600 hover:text-emerald-700 text-right w-full -mt-2">
-              ¿Olvidaste tu contraseña?
-            </button>
-          )}
-          {mode === 'register' && (
-            <label className="flex items-start gap-2 cursor-pointer">
-              <input type="checkbox" checked={acceptedTerms} onChange={e => setAcceptedTerms(e.target.checked)}
-                className="w-4 h-4 mt-0.5 accent-emerald-500 flex-shrink-0" />
-              <span className="text-xs text-gray-600">
-                Acepto los{' '}
-                <button type="button" onClick={() => setShowTerms(true)} className="text-emerald-600 underline font-medium">
-                  Términos y Condiciones
-                </button>
-                {' '}y la{' '}
-                <button type="button" onClick={() => setShowPrivacy(true)} className="text-emerald-600 underline font-medium">
-                  Política de Privacidad
-                </button>
-              </span>
-            </label>
-          )}
-          {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">{error}</div>}
-          <button onClick={mode === 'login' ? handleLogin : handleRegister}
-            disabled={loading || !email || !password}
-            className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-semibold py-3 rounded-xl text-sm">
-            {loading ? 'Cargando...' : mode === 'login' ? 'Continuar →' : 'Crear cuenta'}
-          </button>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <>
@@ -437,12 +157,121 @@ export default function AuthModal({ onClose }: Props) {
               </div>
               <span className="font-bold text-gray-900">Donekta</span>
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-              <X className="w-5 h-5" />
-            </button>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
           </div>
           <div className="p-6">
-            {renderContent()}
+            {mode === 'reset' ? (
+              <div className="space-y-4">
+                <div className="text-center mb-4">
+                  <div className="text-3xl mb-3">🔒</div>
+                  <h2 className="text-xl font-black text-gray-900 mb-1">Recuperar contraseña</h2>
+                  <p className="text-sm text-gray-500">Te enviaremos un enlace a tu correo</p>
+                </div>
+                {resetSent ? (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
+                    <p className="text-emerald-700 font-semibold text-sm">✓ Correo enviado</p>
+                    <p className="text-emerald-600 text-xs mt-1">Revisa tu bandeja de entrada</p>
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Correo electrónico</label>
+                      <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@email.com"
+                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400" />
+                    </div>
+                    {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">{error}</div>}
+                    <button onClick={handleReset} disabled={loading || !email}
+                      className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-semibold py-3 rounded-xl text-sm">
+                      {loading ? 'Enviando...' : 'Enviar código →'}
+                    </button>
+                  </>
+                )}
+                <button onClick={() => { setMode('login'); setError(''); setResetSent(false) }}
+                  className="w-full text-sm text-gray-400 hover:text-gray-600 py-2">← Volver al login</button>
+              </div>
+            ) : (
+              <>
+                <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
+                  <button onClick={() => { setMode('login'); setError('') }}
+                    className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${mode === 'login' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}>
+                    Iniciar sesión
+                  </button>
+                  <button onClick={() => { setMode('register'); setError('') }}
+                    className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${mode === 'register' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}>
+                    Registrarse
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {mode === 'register' && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Nombre completo</label>
+                        <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Tu nombre"
+                          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">¿Cómo deseas unirte?</label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <button onClick={() => setUserType('donor')}
+                            className={`rounded-xl border-2 p-4 text-left transition-all ${userType === 'donor' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                            <Heart className={`w-5 h-5 mb-2 ${userType === 'donor' ? 'text-emerald-500' : 'text-gray-400'}`} />
+                            <p className="font-semibold text-gray-900 text-sm">Donador</p>
+                            <p className="text-xs text-gray-500 mt-0.5">Quiero apoyar comunidades</p>
+                          </button>
+                          <button onClick={() => setUserType('community')}
+                            className={`rounded-xl border-2 p-4 text-left transition-all ${userType === 'community' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                            <Users className={`w-5 h-5 mb-2 ${userType === 'community' ? 'text-emerald-500' : 'text-gray-400'}`} />
+                            <p className="font-semibold text-gray-900 text-sm">Comunidad</p>
+                            <p className="text-xs text-gray-500 mt-0.5">Represento una comunidad</p>
+                          </button>
+                        </div>
+                        {userType === 'community' && (
+                          <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
+                            📧 Tu solicitud será revisada en 1-3 días hábiles.
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Correo electrónico</label>
+                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@email.com"
+                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Contraseña</label>
+                    <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+                      placeholder="Mínimo 6 caracteres"
+                      onKeyDown={e => e.key === 'Enter' && (mode === 'login' ? handleLogin() : handleRegister())}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400" />
+                  </div>
+                  {mode === 'login' && (
+                    <button type="button" onClick={() => { setMode('reset'); setError(''); setResetSent(false) }}
+                      className="text-xs text-emerald-600 hover:text-emerald-700 text-right w-full -mt-2">
+                      ¿Olvidaste tu contraseña?
+                    </button>
+                  )}
+                  {mode === 'register' && (
+                    <label className="flex items-start gap-2 cursor-pointer">
+                      <input type="checkbox" checked={acceptedTerms} onChange={e => setAcceptedTerms(e.target.checked)}
+                        className="w-4 h-4 mt-0.5 accent-emerald-500 flex-shrink-0" />
+                      <span className="text-xs text-gray-600">
+                        Acepto los{' '}
+                        <button type="button" onClick={() => setShowTerms(true)} className="text-emerald-600 underline font-medium">Términos y Condiciones</button>
+                        {' '}y la{' '}
+                        <button type="button" onClick={() => setShowPrivacy(true)} className="text-emerald-600 underline font-medium">Política de Privacidad</button>
+                      </span>
+                    </label>
+                  )}
+                  {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">{error}</div>}
+                  <button onClick={mode === 'login' ? handleLogin : handleRegister}
+                    disabled={loading || !email || !password}
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-semibold py-3 rounded-xl text-sm">
+                    {loading ? 'Cargando...' : mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
