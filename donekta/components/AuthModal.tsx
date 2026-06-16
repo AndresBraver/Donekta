@@ -18,6 +18,7 @@ export default function AuthModal({ onClose }: Props) {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [name, setName] = useState('')
   const [otp, setOtp] = useState('')
+  const [otpToken, setOtpToken] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [acceptedTerms, setAcceptedTerms] = useState(false)
@@ -25,11 +26,10 @@ export default function AuthModal({ onClose }: Props) {
   const [showPrivacy, setShowPrivacy] = useState(false)
 
   const resetState = (newMode: Mode) => {
-    setMode(newMode); setStep('form'); setOtp(''); setError('')
+    setMode(newMode); setStep('form'); setOtp(''); setOtpToken(''); setError('')
     setNewPassword(''); setConfirmPassword('')
   }
 
-  // LOGIN: verify password → send OTP
   const handleLoginSend = async () => {
     setError('')
     if (!email || !password) { setError('Por favor llena todos los campos.'); return }
@@ -42,6 +42,7 @@ export default function AuthModal({ onClose }: Props) {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
+      setOtpToken(data.token)
       setStep('otp')
     } catch (e: any) {
       setError(e.message)
@@ -50,7 +51,6 @@ export default function AuthModal({ onClose }: Props) {
     }
   }
 
-  // LOGIN: verify OTP → sign in
   const handleLoginVerify = async () => {
     setError('')
     if (otp.length !== 6) { setError('Ingresa el código de 6 dígitos.'); return }
@@ -59,11 +59,10 @@ export default function AuthModal({ onClose }: Props) {
       const res = await fetch('/api/otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'verify', email, code: otp, type: 'login' })
+        body: JSON.stringify({ action: 'verify', email, code: otp, token: otpToken, type: 'login' })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      // Sign in with original password
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
       if (email === 'andresbraver@gmail.com') {
@@ -80,7 +79,6 @@ export default function AuthModal({ onClose }: Props) {
     }
   }
 
-  // REGISTER
   const handleRegister = async () => {
     setError('')
     if (!email || !password) { setError('Por favor llena todos los campos.'); return }
@@ -113,7 +111,6 @@ export default function AuthModal({ onClose }: Props) {
     }
   }
 
-  // RESET: send OTP
   const handleResetSend = async () => {
     setError('')
     if (!email) { setError('Escribe tu correo.'); return }
@@ -126,6 +123,7 @@ export default function AuthModal({ onClose }: Props) {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
+      setOtpToken(data.token)
       setStep('otp')
     } catch (e: any) {
       setError(e.message)
@@ -134,14 +132,12 @@ export default function AuthModal({ onClose }: Props) {
     }
   }
 
-  // RESET: verify OTP
-  const handleResetVerify = async () => {
+  const handleResetVerify = () => {
     setError('')
     if (otp.length !== 6) { setError('Ingresa el código de 6 dígitos.'); return }
     setStep('new-password')
   }
 
-  // RESET: set new password
   const handleNewPassword = async () => {
     setError('')
     if (!newPassword || !confirmPassword) { setError('Llena todos los campos.'); return }
@@ -152,12 +148,11 @@ export default function AuthModal({ onClose }: Props) {
       const res = await fetch('/api/otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'verify', email, code: otp, newPassword, type: 'reset' })
+        body: JSON.stringify({ action: 'verify', email, code: otp, token: otpToken, newPassword, type: 'reset' })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       resetState('login')
-      setError('')
       alert('✅ Contraseña actualizada. Ya puedes iniciar sesión.')
     } catch (e: any) {
       setError(e.message)
@@ -226,7 +221,7 @@ export default function AuthModal({ onClose }: Props) {
         className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-semibold py-3 rounded-xl text-sm">
         {loading ? 'Verificando...' : 'Continuar →'}
       </button>
-      <button onClick={() => { setStep('form'); setOtp(''); setError('') }}
+      <button onClick={() => { setStep('form'); setOtp(''); setOtpToken(''); setError('') }}
         className="w-full text-sm text-gray-400 hover:text-gray-600 py-2">← Volver</button>
     </div>
   )
