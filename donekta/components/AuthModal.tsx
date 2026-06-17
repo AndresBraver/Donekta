@@ -24,7 +24,7 @@ export default function AuthModal({ onClose }: Props) {
   const [showTerms, setShowTerms] = useState(false)
   const [showPrivacy, setShowPrivacy] = useState(false)
 
-  const go = (m: Mode) => { setMode(m); setStep('form'); setOtp(''); setOtpToken(''); setError(''); setNewPass(''); setConfirmPass('') }
+  const go = (m: Mode) => { setMode(m); setStep('form'); setOtp(''); setError(''); setNewPass(''); setConfirmPass('') }
 
   // ── LOGIN ──
   // Step 1: verify password then send OTP (session stays active after signIn)
