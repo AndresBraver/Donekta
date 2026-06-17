@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useRouter } from 'next/router'
 import { X, Heart, Users } from 'lucide-react'
@@ -18,7 +19,6 @@ export default function AuthModal({ onClose }: Props) {
   const [confirmPass, setConfirmPass] = useState('')
   const [name, setName] = useState('')
   const [otp, setOtp] = useState('')
-  const [otpToken, setOtpToken] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [acceptedTerms, setAcceptedTerms] = useState(false)
@@ -46,8 +46,7 @@ export default function AuthModal({ onClose }: Props) {
       })
       const d = await r.json()
       if (!r.ok) throw new Error(d.error)
-      setOtpToken(d.token)
-      setStep('otp')
+          setStep('otp')
     } catch (e: any) { setError(e.message) }
     finally { setLoading(false) }
   }
@@ -60,7 +59,7 @@ export default function AuthModal({ onClose }: Props) {
     try {
       const r = await fetch('/api/otp', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'verify', email, code: otp, token: otpToken, type: 'login' })
+        body: JSON.stringify({ action: 'verify', email, code: otp, type: 'login' })
       })
       const d = await r.json()
       if (!r.ok) throw new Error(d.error)
@@ -108,8 +107,7 @@ export default function AuthModal({ onClose }: Props) {
       })
       const d = await r.json()
       if (!r.ok) throw new Error(d.error)
-      setOtpToken(d.token)
-      setStep('otp')
+          setStep('otp')
     } catch (e: any) { setError(e.message) }
     finally { setLoading(false) }
   }
@@ -131,7 +129,7 @@ export default function AuthModal({ onClose }: Props) {
     try {
       const r = await fetch('/api/otp', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'verify', email, code: otp, token: otpToken, newPassword: newPass, type: 'reset' })
+        body: JSON.stringify({ action: 'verify', email, code: otp, newPassword: newPass, type: 'reset' })
       })
       const d = await r.json()
       if (!r.ok) throw new Error(d.error)
@@ -219,7 +217,7 @@ export default function AuthModal({ onClose }: Props) {
                   className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-semibold py-3 rounded-xl text-sm">
                   {loading ? 'Verificando...' : 'Continuar →'}
                 </button>
-                <button onClick={() => { setStep('form'); setOtp(''); setOtpToken(''); setError('') }}
+                <button onClick={() => { setStep('form'); setOtp(''); setError('') }}
                   className="w-full text-sm text-gray-400 hover:text-gray-600 py-2">← Volver</button>
               </div>
             )}
