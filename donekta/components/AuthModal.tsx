@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useRouter } from 'next/router'
 import { X, Heart, Users } from 'lucide-react'
