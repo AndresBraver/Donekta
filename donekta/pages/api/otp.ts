@@ -12,6 +12,9 @@ const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL || ''
 const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || ''
 
 async function redisCmd(...args: string[]) {
+  if (!REDIS_URL || !REDIS_TOKEN) {
+    throw new Error('Redis no configurado: faltan UPSTASH_REDIS_REST_URL o UPSTASH_REDIS_REST_TOKEN en Vercel')
+  }
   const url = `${REDIS_URL}/${args.map(encodeURIComponent).join('/')}`
   const r = await fetch(url, { headers: { Authorization: `Bearer ${REDIS_TOKEN}` } })
   if (!r.ok) {
