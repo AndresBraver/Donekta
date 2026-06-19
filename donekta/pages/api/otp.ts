@@ -1,4 +1,3 @@
-
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
@@ -12,24 +11,14 @@ const supabase = createClient(
 const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL || ''
 const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || ''
 
-async function redisSet(key: string, value: string, exSeconds: number) {
-  await fetch(`${REDIS_URL}/set/${encodeURIComponent(key)}/${encodeURIComponent(value)}/EX/${exSeconds}`, {
-    headers: { Authorization: `Bearer ${REDIS_TOKEN}` }
-  })
-}
-
-async function redisGet(key: string): Promise<string | null> {
-  const r = await fetch(`${REDIS_URL}/get/${encodeURIComponent(key)}`, {
-    headers: { Authorization: `Bearer ${REDIS_TOKEN}` }
-  })
-  const d = await r.json()
-  return d.result ?? null
-}
-
-async function redisDel(key: string) {
-  await fetch(`${REDIS_URL}/del/${encodeURIComponent(key)}`, {
-    headers: { Authorization: `Bearer ${REDIS_TOKEN}` }
-  })
+async function redisCmd(...args: string[]) {
+  const url = `${REDIS_URL}/${args.map(encodeURIComponent).join('/')}`
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${REDIS_TOKEN}` } })
+  if (!r.ok) {
+    const text = await r.text()
+    throw new Error(`Redis error: ${r.status} - ${text}`)
+  }
+  return r.json()
 }
 
 async function sendEmail(to: string, code: string, type: string) {
@@ -56,44 +45,47 @@ async function sendEmail(to: string, code: string, type: string) {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end()
-  const { action, email, code, newPassword, type = 'login' } = req.body
 
-  if (action === 'send') {
-    if (!email) return res.status(400).json({ error: 'Email requerido' })
-    const otp = String(Math.floor(Math.random() * 1000000)).padStart(6, '0')
-    const key = `otp:${type}:${email}`
-    await redisSet(key, otp, 600) // 10 min
-    try {
+  try {
+    const { action, email, code, newPassword, type = 'login' } = req.body
+
+    if (action === 'send') {
+      if (!email) return res.status(400).json({ error: 'Email requerido' })
+      const otp = String(Math.floor(Math.random() * 1000000)).padStart(6, '0')
+      const key = `otp:${type}:${email}`
+
+      await redisCmd('set', key, otp, 'EX', '600')
+
       await sendEmail(email, otp, type)
       return res.status(200).json({ ok: true })
-    } catch (e: any) {
-      return res.status(500).json({ error: 'Error al enviar correo' })
     }
-  }
 
-  if (action === 'verify') {
-    if (!email || !code) return res.status(400).json({ error: 'Datos incompletos' })
-    const key = `otp:${type}:${email}`
-    const stored = await redisGet(key)
-    if (!stored) return res.status(400).json({ error: 'Solicita un nuevo código' })
-    if (stored !== code) return res.status(400).json({ error: 'Código incorrecto' })
-    await redisDel(key)
+    if (action === 'verify') {
+      if (!email || !code) return res.status(400).json({ error: 'Datos incompletos' })
+      const key = `otp:${type}:${email}`
+      const result = await redisCmd('get', key)
+      const stored = result.result
 
-    if (type === 'reset') {
-      if (!newPassword) return res.status(400).json({ error: 'Nueva contraseña requerida' })
-      try {
+      if (!stored) return res.status(400).json({ error: 'Solicita un nuevo código' })
+      if (stored !== code) return res.status(400).json({ error: 'Código incorrecto' })
+
+      await redisCmd('del', key)
+
+      if (type === 'reset') {
+        if (!newPassword) return res.status(400).json({ error: 'Nueva contraseña requerida' })
         const { data: { users } } = await supabase.auth.admin.listUsers()
         const user = users?.find((u: any) => u.email === email)
         if (!user) return res.status(404).json({ error: 'No encontramos una cuenta con ese correo' })
         const { error } = await supabase.auth.admin.updateUserById(user.id, { password: newPassword })
         if (error) throw error
-      } catch (e: any) {
-        return res.status(500).json({ error: e.message || 'Error al actualizar contraseña' })
       }
+
+      return res.status(200).json({ ok: true })
     }
 
-    return res.status(200).json({ ok: true })
+    return res.status(400).json({ error: 'Acción inválida' })
+  } catch (e: any) {
+    console.error('OTP Error:', e)
+    return res.status(500).json({ error: e.message || 'Error interno del servidor' })
   }
-
-  return res.status(400).json({ error: 'Acción inválida' })
 }
