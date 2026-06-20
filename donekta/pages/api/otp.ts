@@ -8,8 +8,13 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 )
 
-const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL || ''
-const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || ''
+function clean(v: string | undefined): string {
+  if (!v) return ''
+  return v.trim().replace(/^["']|["']$/g, '')
+}
+
+const REDIS_URL = clean(process.env.UPSTASH_REDIS_REST_URL)
+const REDIS_TOKEN = clean(process.env.UPSTASH_REDIS_REST_TOKEN)
 
 async function redisCmd(...args: string[]) {
   if (!REDIS_URL || !REDIS_TOKEN) {
