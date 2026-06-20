@@ -76,9 +76,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (type === 'reset') {
         if (!newPassword) return res.status(400).json({ error: 'Nueva contraseña requerida' })
-        const { data: { users } } = await supabase.auth.admin.listUsers()
-        const user = users?.find((u: any) => u.email === email)
-        if (!user) return res.status(404).json({ error: 'No encontramos una cuenta con ese correo' })
+        let allUsers: any[] = []
+        let page = 1
+        while (true) {
+          const { data, error: listErr } = await supabase.auth.admin.listUsers({ page, perPage: 1000 })
+          if (listErr) throw listErr
+          allUsers = allUsers.concat(data.users)
+          if (data.users.length < 1000) break
+          page++
+        }
+        const user = allUsers.find((u: any) => u.email?.toLowerCase().trim() === email.toLowerCase().trim())
+        if (!user) return res.status(404).json({ error: `No encontramos una cuenta con ese correo (${email})` })
         const { error } = await supabase.auth.admin.updateUserById(user.id, { password: newPassword })
         if (error) throw error
       }
