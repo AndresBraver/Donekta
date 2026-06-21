@@ -16,6 +16,7 @@ export default function Donor() {
   const [donorName, setDonorName] = useState('')
   const [donorEmail, setDonorEmail] = useState('')
   const [dedicateTo, setDedicateTo] = useState('')
+  const [dedicateEmail, setDedicateEmail] = useState('')
   const [frequency, setFrequency] = useState<'única' | 'mensual' | 'trimestral' | 'semestral' | 'anual'>('única')
   const [lastDonationId, setLastDonationId] = useState<string | null>(null)
 
@@ -71,7 +72,7 @@ export default function Donor() {
     await fetch('/api/send-donation-confirmation', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ donorEmail, donorName, amount, communityName: selected.name, frequency })
+      body: JSON.stringify({ donorEmail, donorName, amount, communityName: selected.name, frequency, dedicateTo, dedicateEmail })
     })
     setShowCheckout(false)
     setDonated(true)
@@ -79,7 +80,7 @@ export default function Donor() {
 
   const reset = () => {
     setDonated(false); setSelected(null); setAmount(180); setCustomAmount('')
-    setDedicateTo(''); setFrequency('única')
+    setDedicateTo(''); setDedicateEmail(''); setFrequency('única')
     setLastDonationId(null)
     fetchCommunities()
   }
@@ -198,8 +199,18 @@ export default function Donor() {
                   </label>
                   <input type="text" placeholder="Nombre de la persona"
                     value={dedicateTo} onChange={e => setDedicateTo(e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400" />
-                  {dedicateTo && <p className="text-xs text-emerald-600 mt-1.5">✓ Dedicada a <strong>{dedicateTo}</strong></p>}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400 mb-2" />
+                  {dedicateTo && (
+                    <>
+                      <input type="email" placeholder="Correo de esa persona (opcional)"
+                        value={dedicateEmail} onChange={e => setDedicateEmail(e.target.value)}
+                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400" />
+                      <p className="text-xs text-emerald-600 mt-1.5">
+                        ✓ Dedicada a <strong>{dedicateTo}</strong>
+                        {dedicateEmail ? <> — el certificado llegará a <strong>{dedicateEmail}</strong></> : ' — el certificado llegará a tu correo'}
+                      </p>
+                    </>
+                  )}
                 </div>
 
                 <button onClick={() => setShowCheckout(true)} disabled={amount < 1}
