@@ -17,9 +17,6 @@ export default function Donor() {
   const [donorEmail, setDonorEmail] = useState('')
   const [dedicateTo, setDedicateTo] = useState('')
   const [frequency, setFrequency] = useState<'única' | 'mensual' | 'trimestral' | 'semestral' | 'anual'>('única')
-  const [comment, setComment] = useState('')
-  const [publicComment, setPublicComment] = useState(false)
-  const [commentSaved, setCommentSaved] = useState(false)
   const [lastDonationId, setLastDonationId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -68,33 +65,22 @@ export default function Donor() {
       donor_name: dedicateTo ? `${donorName} (en nombre de ${dedicateTo})` : donorName,
       donor_email: donorEmail,
       amount,
-      comment: null,
-      public_comment: false,
+      frequency,
     }]).select().single()
     if (donData) setLastDonationId(donData.id)
     await fetch('/api/send-donation-confirmation', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ donorEmail, donorName, amount, communityName: selected.name, dedicateTo })
+      body: JSON.stringify({ donorEmail, donorName, amount, communityName: selected.name, frequency })
     })
     setShowCheckout(false)
     setDonated(true)
   }
 
-  const saveComment = async () => {
-    if (!comment.trim() || !lastDonationId) return
-    await supabase.from('donations').update({
-      comment: comment.trim(),
-      public_comment: publicComment,
-      comment_approved: false,
-    }).eq('id', lastDonationId)
-    setCommentSaved(true)
-  }
-
   const reset = () => {
     setDonated(false); setSelected(null); setAmount(180); setCustomAmount('')
-    setDedicateTo(''); setComment(''); setPublicComment(false); setFrequency('única')
-    setCommentSaved(false); setLastDonationId(null)
+    setDedicateTo(''); setFrequency('única')
+    setLastDonationId(null)
     fetchCommunities()
   }
 
@@ -111,36 +97,6 @@ export default function Donor() {
             <strong>{selected.name}</strong> fue procesada.
             {dedicateTo && <span> Dedicada a <strong>{dedicateTo}</strong>.</span>}
           </p>
-
-          {!commentSaved ? (
-            <div className="text-left mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                ¿Quieres dejar un comentario? <span className="text-gray-400 font-normal">(opcional)</span>
-              </label>
-              <textarea
-                value={comment}
-                onChange={e => setComment(e.target.value)}
-                placeholder="Comparte por qué decidiste donar..."
-                rows={3}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400 resize-none mb-3"
-              />
-              <label className="flex items-center gap-2 cursor-pointer mb-4">
-                <input type="checkbox" checked={publicComment} onChange={e => setPublicComment(e.target.checked)}
-                  className="w-4 h-4 accent-emerald-500" />
-                <span className="text-sm text-gray-600">Mostrar mi comentario públicamente en la página principal</span>
-              </label>
-              {comment.trim() && (
-                <button onClick={saveComment}
-                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2.5 rounded-xl transition-colors text-sm mb-3">
-                  Publicar comentario
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-6 text-sm text-emerald-700">
-              ✓ Comentario guardado {publicComment ? '— aparecerá en la página principal' : '— guardado de forma privada'}
-            </div>
-          )}
 
           <button onClick={reset} className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-xl transition-colors text-sm">
             Donar a otra comunidad
