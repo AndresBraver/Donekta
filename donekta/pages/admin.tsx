@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
-import { CheckCircle, XCircle, Clock, Heart, Copy, Check, Trash2, Users, DollarSign, TrendingUp, MessageSquare } from 'lucide-react'
+import { CheckCircle, XCircle, Clock, Heart, Copy, Check, Trash2, Users, DollarSign } from 'lucide-react'
 import { supabase, Community } from '../lib/supabase'
 
 export default function Admin() {
   const [communities, setCommunities] = useState<Community[]>([])
   const [donations, setDonations] = useState<any[]>([])
-  const [pendingComments, setPendingComments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'pending' | 'approved' | 'rejected'>('pending')
-  const [tab, setTab] = useState<'communities' | 'comments'>('communities')
   const [copied, setCopied] = useState<string | null>(null)
   const [approvingId, setApprovingId] = useState<string | null>(null)
   const [editKey, setEditKey] = useState('')
@@ -21,25 +19,9 @@ export default function Admin() {
     setLoading(true)
     const { data: comms } = await supabase.from('communities').select('*').order('created_at', { ascending: false })
     const { data: dons } = await supabase.from('donations').select('*, communities(name)').order('created_at', { ascending: false }).limit(10)
-    const { data: comments } = await supabase.from('donations')
-      .select('id, comment, donor_name, donor_email, public_comment, comment_approved, created_at, communities(name)')
-      .not('comment', 'is', null)
-      .eq('comment_approved', false)
-      .order('created_at', { ascending: false })
     setCommunities(comms || [])
     setDonations(dons || [])
-    setPendingComments(comments || [])
     setLoading(false)
-  }
-
-  const approveComment = async (id: string) => {
-    await supabase.from('donations').update({ comment_approved: true }).eq('id', id)
-    fetchAll()
-  }
-
-  const rejectComment = async (id: string) => {
-    await supabase.from('donations').update({ comment: null, public_comment: false, comment_approved: false }).eq('id', id)
-    fetchAll()
   }
 
   const startApprove = (id: string) => { setApprovingId(id); setEditKey(''); setKeyError('') }
@@ -102,7 +84,7 @@ export default function Admin() {
 
         <div className="max-w-5xl mx-auto px-6 py-10">
           {/* STATS */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-3 gap-4 mb-8">
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center mb-3">
                 <Users className="w-5 h-5 text-emerald-600" />
@@ -118,13 +100,6 @@ export default function Admin() {
               <p className="text-sm text-gray-500">Pendientes</p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
-              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center mb-3">
-                <MessageSquare className="w-5 h-5 text-blue-600" />
-              </div>
-              <p className="text-2xl font-black text-gray-900">{pendingComments.length}</p>
-              <p className="text-sm text-gray-500">Comentarios pendientes</p>
-            </div>
-            <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center mb-3">
                 <DollarSign className="w-5 h-5 text-purple-600" />
               </div>
@@ -133,64 +108,7 @@ export default function Admin() {
             </div>
           </div>
 
-          {/* TABS */}
-          <div className="flex gap-2 mb-6">
-            <button onClick={() => setTab('communities')}
-              className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${tab === 'communities' ? 'bg-emerald-500 text-white' : 'bg-white border border-gray-200 text-gray-600'}`}>
-              Comunidades
-            </button>
-            <button onClick={() => setTab('comments')}
-              className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${tab === 'comments' ? 'bg-emerald-500 text-white' : 'bg-white border border-gray-200 text-gray-600'}`}>
-              Comentarios
-              {pendingComments.length > 0 && (
-                <span className="w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">{pendingComments.length}</span>
-              )}
-            </button>
-          </div>
-
-          {/* COMENTARIOS TAB */}
-          {tab === 'comments' && (
-            <div>
-              {pendingComments.length === 0 ? (
-                <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
-                  <MessageSquare className="w-10 h-10 text-gray-200 mx-auto mb-4" />
-                  <p className="text-gray-400 font-medium">No hay comentarios pendientes</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {pendingComments.map(c => (
-                    <div key={c.id} className="bg-white rounded-2xl border border-gray-100 p-6">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <p className="text-gray-900 font-medium mb-2">"{c.comment}"</p>
-                          <p className="text-sm text-gray-500">👤 {c.donor_name || 'Anónimo'} · {c.donor_email}</p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            Donó a <strong>{c.communities?.name}</strong> · {new Date(c.created_at).toLocaleDateString('es-MX')}
-                          </p>
-                          <span className={`inline-block mt-2 text-xs px-2 py-0.5 rounded-full ${c.public_comment ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
-                            {c.public_comment ? '🌐 Quiere hacerlo público' : '🔒 Privado'}
-                          </span>
-                        </div>
-                        <div className="flex gap-2 flex-shrink-0">
-                          <button onClick={() => approveComment(c.id)}
-                            className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
-                            <CheckCircle className="w-3.5 h-3.5" /> Aprobar
-                          </button>
-                          <button onClick={() => rejectComment(c.id)}
-                            className="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
-                            <XCircle className="w-3.5 h-3.5" /> Rechazar
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* COMUNIDADES TAB */}
-          {tab === 'communities' && (
+          <div>
             <div>
               {donations.length > 0 && (
                 <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6">
@@ -306,7 +224,6 @@ export default function Admin() {
                 </div>
               )}
             </div>
-          )}
         </div>
       </div>
     </>
