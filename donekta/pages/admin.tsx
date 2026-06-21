@@ -109,8 +109,7 @@ export default function Admin() {
           </div>
 
           <div>
-            <div>
-              {donations.length > 0 && (
+            {donations.length > 0 && (
                 <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6">
                   <h2 className="font-black text-gray-900 mb-4">Donaciones recientes</h2>
                   <div className="space-y-3">
