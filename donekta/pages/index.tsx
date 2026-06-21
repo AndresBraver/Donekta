@@ -3,10 +3,14 @@ import { useState, useEffect } from 'react'
 import AuthModal from '../components/AuthModal'
 import { supabase } from '../lib/supabase'
 
+// Testimonios fijos — Andres los agrega/edita manualmente aquí
+const testimonials: { comment: string; donor_name: string; community?: string }[] = [
+  // Ejemplo: { comment: 'Donar aquí fue muy fácil y rápido.', donor_name: 'María G.', community: 'Comedor Esperanza' },
+]
+
 export default function Home() {
   const [showAuth, setShowAuth] = useState(false)
   const [stats, setStats] = useState({ donors: 0, communities: 0, raised: 0 })
-  const [heroComments, setHeroComments] = useState<any[]>([])
 
   useEffect(() => {
     // Load real stats
@@ -22,17 +26,6 @@ export default function Home() {
         raised: totalRaised,
       })
     })
-
-    // Load approved public comments
-    supabase
-      .from('donations')
-      .select('comment, donor_name, communities(name)')
-      .eq('public_comment', true)
-      .eq('comment_approved', true)
-      .not('comment', 'is', null)
-      .order('created_at', { ascending: false })
-      .limit(3)
-      .then(({ data }) => setHeroComments(data || []))
   }, [])
 
   const formatStats = (n: number) => n >= 1000000 ? `$${(n/1000000).toFixed(1)}M` : n >= 1000 ? `${(n/1000).toFixed(0)}K` : n.toString()
@@ -94,7 +87,7 @@ export default function Home() {
 
           {/* COMENTARIOS EN HERO */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {heroComments.length > 0 ? heroComments.map((c, i) => (
+            {testimonials.length > 0 ? testimonials.map((c, i) => (
               <div key={i} style={{ background: '#fff', borderRadius: 16, padding: 20, border: '1px solid #D1F5E3', boxShadow: '0 2px 8px rgba(85,181,132,0.08)' }}>
                 <p style={{ fontSize: 14, color: '#6F737D', lineHeight: 1.6, marginBottom: 12, fontStyle: 'italic' }}>"{c.comment}"</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -103,7 +96,7 @@ export default function Home() {
                   </div>
                   <div>
                     <p style={{ fontSize: 12, fontWeight: 600, color: '#121826' }}>{c.donor_name || 'Anónimo'}</p>
-                    {c.communities?.name && <p style={{ fontSize: 11, color: '#6F737D' }}>Donó a {c.communities.name}</p>}
+                    {c.community && <p style={{ fontSize: 11, color: '#6F737D' }}>Donó a {c.community}</p>}
                   </div>
                 </div>
               </div>
