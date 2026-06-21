@@ -155,14 +155,14 @@ export default function Home() {
         <div style={{ maxWidth: 700, margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{ fontSize: 36, fontWeight: 900, color: '#fff', marginBottom: 16 }}>Transparencia total</h2>
           <p style={{ fontSize: 16, color: '#9CA3AF', marginBottom: 8, lineHeight: 1.7 }}>
-            El <strong style={{ color: '#55B584' }}>94.5%</strong> de tu donación llega directo a la comunidad. El resto cubre el procesamiento seguro del pago y el mantenimiento de la plataforma.
+            El <strong style={{ color: '#55B584' }}>94.4%</strong> de tu donación llega directo a la comunidad. El resto cubre el procesamiento seguro del pago y el mantenimiento de la plataforma.
           </p>
           <p style={{ fontSize: 14, color: '#6B7280', marginBottom: 40, lineHeight: 1.6 }}>
             Gracias a esto podemos seguir conectando donadores con comunidades reales en todo México, garantizando pagos seguros y transparentes.
           </p>
           <div className="comision-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 40 }}>
             <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: 24 }}>
-              <p style={{ fontSize: 30, fontWeight: 900, color: '#55B584', marginBottom: 4 }}>94.5%</p>
+              <p style={{ fontSize: 30, fontWeight: 900, color: '#55B584', marginBottom: 4 }}>94.4%</p>
               <p style={{ fontSize: 13, color: '#9CA3AF' }}>Va a la comunidad</p>
             </div>
             <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: 24 }}>
@@ -183,25 +183,19 @@ export default function Home() {
             </div>
             <span style={{ color: '#374151' }}>·</span>
             <div style={{ background: '#fff', borderRadius: 6, padding: '6px 12px', display: 'flex', alignItems: 'center' }}>
-              <span style={{ fontSize: 13, color: '#635BFF', fontWeight: 800, letterSpacing: -0.5 }}>stripe</span>
+              <img src="/stripe-logo.png" alt="Stripe" style={{ height: 16, display: 'block' }} />
             </div>
             <span style={{ color: '#374151' }}>·</span>
             <div style={{ background: '#fff', borderRadius: 6, padding: '6px 12px', display: 'flex', alignItems: 'center' }}>
-              <svg width="38" height="14" viewBox="0 0 38 14" xmlns="http://www.w3.org/2000/svg">
-                <text x="0" y="11.5" fontFamily="Arial, Helvetica, sans-serif" fontWeight="900" fontStyle="italic" fontSize="14" fill="#1A1F71" letterSpacing="-0.5">VISA</text>
-              </svg>
+              <img src="/visa.png" alt="Visa" style={{ height: 16, display: 'block' }} />
             </div>
             <span style={{ color: '#374151' }}>·</span>
             <div style={{ background: '#fff', borderRadius: 6, padding: '6px 10px', display: 'flex', alignItems: 'center' }}>
-              <svg width="28" height="18" viewBox="0 0 28 18" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="10.5" cy="9" r="8" fill="#EB001B" />
-                <circle cx="17.5" cy="9" r="8" fill="#F79E1B" />
-                <path d="M14 2.7a8 8 0 010 12.6 8 8 0 010-12.6z" fill="#FF5F00" />
-              </svg>
+              <img src="/mastercard.png" alt="Mastercard" style={{ height: 20, display: 'block' }} />
             </div>
             <span style={{ color: '#374151' }}>·</span>
-            <div style={{ background: '#016FD0', borderRadius: 6, padding: '6px 12px', display: 'flex', alignItems: 'center' }}>
-              <span style={{ fontSize: 12, color: '#fff', fontWeight: 700, letterSpacing: 0.5 }}>AMEX</span>
+            <div style={{ background: '#fff', borderRadius: 6, padding: '6px 10px', display: 'flex', alignItems: 'center' }}>
+              <img src="/american-express.svg" alt="American Express" style={{ height: 18, display: 'block' }} />
             </div>
           </div>
         </div>
@@ -265,15 +259,14 @@ export default function Home() {
       </footer>
 
       <style>{`
+        .hero-text-centered { text-align: center; max-width: 720px; margin: 0 auto; }
+        .hero-text-centered .hero-desc { margin-left: auto; margin-right: auto; max-width: 600px; }
+        .hero-text-centered > div:last-child { justify-content: center; }
         .mobile-donate { display: none; }
         @media (max-width: 768px) {
           .mobile-donate { display: block; position: fixed; bottom: 0; left: 0; right: 0; padding: 12px 16px; background: #fff; border-top: 1px solid #F0F4F8; z-index: 100; }
           .hero-section { padding: 48px 20px !important; }
           .hero-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
-          .hero-text-centered { text-align: center; }
-          .hero-text-centered > div:first-child { margin-left: auto; margin-right: auto; }
-          .hero-text-centered p { margin-left: auto; margin-right: auto; }
-          .hero-text-centered > div:last-child { justify-content: center; }
           .hero-title { font-size: 36px !important; }
           .hero-desc { font-size: 16px !important; }
           .nav-inner { padding: 0 16px !important; }
