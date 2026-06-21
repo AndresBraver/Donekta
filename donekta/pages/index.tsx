@@ -48,10 +48,10 @@ export default function Home() {
 
       {/* NAV */}
       <nav style={{ background: '#fff', borderBottom: '1px solid #F0F4F8', position: 'sticky', top: 0, zIndex: 50 }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="nav-inner" style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <img src="/logo-donekta-oscuro.svg" alt="Donekta" style={{ height: 36 }} />
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-            <button onClick={() => setShowAuth(true)} style={{ fontSize: 14, color: '#6F737D', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 16px' }}>
+            <button onClick={() => setShowAuth(true)} className="nav-secondary-btn" style={{ fontSize: 14, color: '#6F737D', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 16px' }}>
               Soy comunidad
             </button>
             <button onClick={() => setShowAuth(true)} style={{ fontSize: 14, fontWeight: 600, color: '#fff', background: '#55B584', border: 'none', cursor: 'pointer', padding: '10px 22px', borderRadius: 100 }}>
@@ -62,17 +62,17 @@ export default function Home() {
       </nav>
 
       {/* HERO */}
-      <section style={{ background: '#EDFBF4', padding: '80px 24px' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center' }}>
-          <div>
+      <section style={{ background: '#EDFBF4', padding: '80px 24px' }} className="hero-section">
+        <div className="hero-grid" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: testimonials.length > 0 ? '1fr 1fr' : '1fr', gap: 48, alignItems: 'center' }}>
+          <div className={testimonials.length === 0 ? 'hero-text-centered' : ''}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid #D1F5E3', borderRadius: 100, padding: '6px 16px', marginBottom: 24 }}>
               <span style={{ width: 8, height: 8, background: '#55B584', borderRadius: '50%', display: 'inline-block' }} />
               <span style={{ fontSize: 13, color: '#55B584', fontWeight: 600 }}>Conectando comunidades con donadores</span>
             </div>
-            <h1 style={{ fontSize: 52, fontWeight: 900, color: '#121826', lineHeight: 1.15, marginBottom: 20 }}>
+            <h1 className="hero-title" style={{ fontSize: 52, fontWeight: 900, color: '#121826', lineHeight: 1.15, marginBottom: 20 }}>
               Dona con<br /><span style={{ color: '#55B584' }}>propósito</span>
             </h1>
-            <p style={{ fontSize: 18, color: '#6F737D', lineHeight: 1.7, marginBottom: 36, maxWidth: 480 }}>
+            <p className="hero-desc" style={{ fontSize: 18, color: '#6F737D', lineHeight: 1.7, marginBottom: 36, maxWidth: 480 }}>
               Conectamos donadores con comunidades reales de México. Cada aportación llega directo a quienes más lo necesitan.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
@@ -85,35 +85,31 @@ export default function Home() {
             </div>
           </div>
 
-          {/* COMENTARIOS EN HERO */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {testimonials.length > 0 ? testimonials.map((c, i) => (
-              <div key={i} style={{ background: '#fff', borderRadius: 16, padding: 20, border: '1px solid #D1F5E3', boxShadow: '0 2px 8px rgba(85,181,132,0.08)' }}>
-                <p style={{ fontSize: 14, color: '#6F737D', lineHeight: 1.6, marginBottom: 12, fontStyle: 'italic' }}>"{c.comment}"</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#EDFBF4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#55B584', flexShrink: 0 }}>
-                    {(c.donor_name || 'A')[0].toUpperCase()}
-                  </div>
-                  <div>
-                    <p style={{ fontSize: 12, fontWeight: 600, color: '#121826' }}>{c.donor_name || 'Anónimo'}</p>
-                    {c.community && <p style={{ fontSize: 11, color: '#6F737D' }}>Donó a {c.community}</p>}
+          {/* COMENTARIOS EN HERO — solo se muestran si hay testimonios */}
+          {testimonials.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {testimonials.map((c, i) => (
+                <div key={i} style={{ background: '#fff', borderRadius: 16, padding: 20, border: '1px solid #D1F5E3', boxShadow: '0 2px 8px rgba(85,181,132,0.08)' }}>
+                  <p style={{ fontSize: 14, color: '#6F737D', lineHeight: 1.6, marginBottom: 12, fontStyle: 'italic' }}>"{c.comment}"</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#EDFBF4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#55B584', flexShrink: 0 }}>
+                      {(c.donor_name || 'A')[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 12, fontWeight: 600, color: '#121826' }}>{c.donor_name || 'Anónimo'}</p>
+                      {c.community && <p style={{ fontSize: 11, color: '#6F737D' }}>Donó a {c.community}</p>}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )) : (
-              <div style={{ background: '#fff', borderRadius: 20, padding: 32, border: '1px solid #D1F5E3', textAlign: 'center' }}>
-                <p style={{ fontSize: 40, marginBottom: 12 }}>💚</p>
-                <p style={{ fontSize: 16, color: '#55B584', fontWeight: 700, marginBottom: 8 }}>Sé el primero en donar</p>
-                <p style={{ fontSize: 13, color: '#6F737D', lineHeight: 1.6 }}>Aquí aparecerán los comentarios de donadores que ya apoyaron comunidades reales en México.</p>
-              </div>
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
       {/* STATS REALES */}
       <section style={{ background: '#121826', padding: '48px 24px' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32, textAlign: 'center' }}>
+        <div className="stats-grid" style={{ maxWidth: 900, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32, textAlign: 'center' }}>
           <div>
             <p style={{ fontSize: 36, fontWeight: 900, color: '#55B584', marginBottom: 4 }}>{stats.donors > 0 ? `${stats.donors}+` : '...'}</p>
             <p style={{ fontSize: 14, color: '#9CA3AF' }}>Donadores activos</p>
@@ -136,7 +132,7 @@ export default function Home() {
             <h2 style={{ fontSize: 36, fontWeight: 900, color: '#121826', marginBottom: 12 }}>¿Cómo funciona?</h2>
             <p style={{ fontSize: 16, color: '#6F737D' }}>Tres pasos para hacer la diferencia</p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32 }}>
+          <div className="how-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32 }}>
             {[
               { img: '/paso-1-registrate.svg', title: 'Regístrate', desc: 'Crea tu cuenta como donador o representa a tu comunidad en minutos.' },
               { img: '/paso-2-conecta.svg', title: 'Conecta', desc: 'Elige la comunidad que quieres apoyar y realiza tu donación de forma segura.' },
@@ -159,19 +155,23 @@ export default function Home() {
         <div style={{ maxWidth: 700, margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{ fontSize: 36, fontWeight: 900, color: '#fff', marginBottom: 16 }}>Transparencia total</h2>
           <p style={{ fontSize: 16, color: '#9CA3AF', marginBottom: 8, lineHeight: 1.7 }}>
-            Donekta cobra una comisión del <strong style={{ color: '#55B584' }}>2%</strong> por donación para mantener activa la plataforma. El resto llega directo a la comunidad.
+            El <strong style={{ color: '#55B584' }}>94.5%</strong> de tu donación llega directo a la comunidad. El resto cubre el procesamiento seguro del pago y el mantenimiento de la plataforma.
           </p>
           <p style={{ fontSize: 14, color: '#6B7280', marginBottom: 40, lineHeight: 1.6 }}>
-            Gracias a esta pequeña comisión podemos seguir conectando donadores con comunidades reales en todo México, garantizando pagos seguros y transparentes.
+            Gracias a esto podemos seguir conectando donadores con comunidades reales en todo México, garantizando pagos seguros y transparentes.
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 40 }}>
+          <div className="comision-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 40 }}>
             <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: 24 }}>
-              <p style={{ fontSize: 32, fontWeight: 900, color: '#55B584', marginBottom: 4 }}>98%</p>
-              <p style={{ fontSize: 14, color: '#9CA3AF' }}>Va a la comunidad</p>
+              <p style={{ fontSize: 30, fontWeight: 900, color: '#55B584', marginBottom: 4 }}>94.5%</p>
+              <p style={{ fontSize: 13, color: '#9CA3AF' }}>Va a la comunidad</p>
             </div>
             <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: 24 }}>
-              <p style={{ fontSize: 32, fontWeight: 900, color: '#fff', marginBottom: 4 }}>2%</p>
-              <p style={{ fontSize: 14, color: '#9CA3AF' }}>Mantiene la plataforma activa</p>
+              <p style={{ fontSize: 30, fontWeight: 900, color: '#fff', marginBottom: 4 }}>2%</p>
+              <p style={{ fontSize: 13, color: '#9CA3AF' }}>Mantiene Donekta activa</p>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: 24 }}>
+              <p style={{ fontSize: 30, fontWeight: 900, color: '#9CA3AF', marginBottom: 4 }}>3.6%</p>
+              <p style={{ fontSize: 13, color: '#9CA3AF' }}>Procesamiento (Stripe)</p>
             </div>
           </div>
 
@@ -182,22 +182,26 @@ export default function Home() {
               <span style={{ fontSize: 13, color: '#9CA3AF', fontWeight: 500 }}>SSL Seguro</span>
             </div>
             <span style={{ color: '#374151' }}>·</span>
-            <div style={{ background: '#635BFF', borderRadius: 6, padding: '4px 12px' }}>
-              <span style={{ fontSize: 13, color: '#fff', fontWeight: 700 }}>stripe</span>
+            <div style={{ background: '#fff', borderRadius: 6, padding: '6px 12px', display: 'flex', alignItems: 'center' }}>
+              <span style={{ fontSize: 13, color: '#635BFF', fontWeight: 800, letterSpacing: -0.5 }}>stripe</span>
             </div>
             <span style={{ color: '#374151' }}>·</span>
-            <div style={{ background: '#1A1F71', borderRadius: 6, padding: '4px 12px' }}>
-              <span style={{ fontSize: 13, color: '#fff', fontWeight: 700 }}>VISA</span>
+            <div style={{ background: '#fff', borderRadius: 6, padding: '6px 12px', display: 'flex', alignItems: 'center' }}>
+              <svg width="38" height="14" viewBox="0 0 38 14" xmlns="http://www.w3.org/2000/svg">
+                <text x="0" y="11.5" fontFamily="Arial, Helvetica, sans-serif" fontWeight="900" fontStyle="italic" fontSize="14" fill="#1A1F71" letterSpacing="-0.5">VISA</text>
+              </svg>
             </div>
             <span style={{ color: '#374151' }}>·</span>
-            <div style={{ background: '#EB001B', borderRadius: 6, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#EB001B', border: '2px solid #fff' }} />
-              <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#F79E1B', marginLeft: -8 }} />
-              <span style={{ fontSize: 11, color: '#fff', fontWeight: 700, marginLeft: 4 }}>MC</span>
+            <div style={{ background: '#fff', borderRadius: 6, padding: '6px 10px', display: 'flex', alignItems: 'center' }}>
+              <svg width="28" height="18" viewBox="0 0 28 18" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="10.5" cy="9" r="8" fill="#EB001B" />
+                <circle cx="17.5" cy="9" r="8" fill="#F79E1B" />
+                <path d="M14 2.7a8 8 0 010 12.6 8 8 0 010-12.6z" fill="#FF5F00" />
+              </svg>
             </div>
             <span style={{ color: '#374151' }}>·</span>
-            <div style={{ background: '#016FD0', borderRadius: 6, padding: '4px 12px' }}>
-              <span style={{ fontSize: 13, color: '#fff', fontWeight: 700 }}>AMEX</span>
+            <div style={{ background: '#016FD0', borderRadius: 6, padding: '6px 12px', display: 'flex', alignItems: 'center' }}>
+              <span style={{ fontSize: 12, color: '#fff', fontWeight: 700, letterSpacing: 0.5 }}>AMEX</span>
             </div>
           </div>
         </div>
@@ -224,7 +228,7 @@ export default function Home() {
       {/* FOOTER */}
       <footer style={{ background: '#0D1117', padding: '48px 24px 24px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 40, marginBottom: 40 }}>
+          <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 40, marginBottom: 40 }}>
             <div>
               <img src="/logo-donekta-claro.svg" alt="Donekta" style={{ height: 32, marginBottom: 16 }} />
               <p style={{ fontSize: 14, color: '#6B7280', lineHeight: 1.7, maxWidth: 280 }}>
@@ -264,6 +268,27 @@ export default function Home() {
         .mobile-donate { display: none; }
         @media (max-width: 768px) {
           .mobile-donate { display: block; position: fixed; bottom: 0; left: 0; right: 0; padding: 12px 16px; background: #fff; border-top: 1px solid #F0F4F8; z-index: 100; }
+          .hero-section { padding: 48px 20px !important; }
+          .hero-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+          .hero-text-centered { text-align: center; }
+          .hero-text-centered > div:first-child { margin-left: auto; margin-right: auto; }
+          .hero-text-centered p { margin-left: auto; margin-right: auto; }
+          .hero-text-centered > div:last-child { justify-content: center; }
+          .hero-title { font-size: 36px !important; }
+          .hero-desc { font-size: 16px !important; }
+          .nav-inner { padding: 0 16px !important; }
+          .nav-secondary-btn { display: none !important; }
+          .stats-grid { gap: 16px !important; }
+          .stats-grid p:first-child { font-size: 24px !important; }
+          .how-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
+          .comision-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+          .footer-grid { grid-template-columns: 1fr 1fr !important; gap: 28px !important; }
+          .footer-grid > div:first-child { grid-column: 1 / -1; }
+          section { padding-left: 20px !important; padding-right: 20px !important; padding-top: 56px !important; padding-bottom: 56px !important; }
+        }
+        @media (max-width: 480px) {
+          .footer-grid { grid-template-columns: 1fr !important; }
+          .stats-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
         }
       `}</style>
       <div className="mobile-donate">
