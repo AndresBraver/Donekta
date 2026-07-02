@@ -142,7 +142,7 @@ export default function AuthModal({ onClose }: Props) {
   const Err = () => error ? <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">{error}</div> : null
 
   const TermsModal = () => (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4 overflow-y-auto scroll-momentum">
       <div className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col shadow-2xl">
         <div className="flex items-center justify-between p-5 border-b border-gray-100">
           <h3 className="font-black text-gray-900">Términos y Condiciones</h3>
@@ -164,7 +164,7 @@ export default function AuthModal({ onClose }: Props) {
   )
 
   const PrivacyModal = () => (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4 overflow-y-auto scroll-momentum">
       <div className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col shadow-2xl">
         <div className="flex items-center justify-between p-5 border-b border-gray-100">
           <h3 className="font-black text-gray-900">Política de Privacidad</h3>
@@ -185,8 +185,8 @@ export default function AuthModal({ onClose }: Props) {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl w-full max-w-md shadow-xl overflow-hidden">
+      <div className="fixed inset-0 bg-black/50 flex items-start sm:items-center justify-center z-50 p-4 overflow-y-auto scroll-momentum" style={{ paddingTop: 'max(16px, env(safe-area-inset-top))', paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
+        <div className="bg-white rounded-2xl w-full max-w-md shadow-xl overflow-hidden my-auto">
           <div className="flex items-center justify-between p-6 border-b border-gray-100">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center">

@@ -35,7 +35,6 @@ export default function Home() {
       <Head>
         <title>Donekta — Dona con propósito</title>
         <meta name="description" content="Conectamos donadores con comunidades reales de México." />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/logo-marca-corazon.svg" />
         <meta property="og:title" content="Donekta — Dona con propósito" />
         <meta property="og:description" content="Conectamos donadores con comunidades reales de México." />
@@ -264,7 +263,8 @@ export default function Home() {
         .hero-text-centered > div:last-child { justify-content: center; }
         .mobile-donate { display: none; }
         @media (max-width: 768px) {
-          .mobile-donate { display: block; position: fixed; bottom: 0; left: 0; right: 0; padding: 12px 16px; background: #fff; border-top: 1px solid #F0F4F8; z-index: 100; }
+          .mobile-donate { display: block; position: fixed; bottom: 0; left: 0; right: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: rgba(255,255,255,0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid #F0F4F8; z-index: 100; }
+          body { padding-bottom: 80px; }
           .hero-section { padding: 48px 20px !important; }
           .hero-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
           .hero-title { font-size: 36px !important; }
